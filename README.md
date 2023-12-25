@@ -12,9 +12,13 @@ Built upon our projects, the [UniqueBible App](https://github.com/eliranwong/Uni
 
 > searchbible
 
-To convert an UniqueBible App bible file, e.g.:
+To specify a bible version for searches, e.g. KJV:
 
-> searchbibleconvertor -b "/temp/NET.bible"
+> searchbible KJV
+
+To convert an UniqueBible App bible file, with a given path, e.g.:
+
+> searchbibleconvertor -b "/temp/KJV.bible"
 
 # Progress
 

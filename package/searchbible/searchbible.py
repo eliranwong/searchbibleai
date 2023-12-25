@@ -2,7 +2,7 @@ from searchbible.health_check import HealthCheck
 from searchbible.convertor.bible import ConvertBible
 from searchbible import config
 from chromadb.config import Settings
-import os, chromadb, re
+import os, chromadb, re, argparse
 
 
 # combined semantic and literal and regular expression searches
@@ -16,9 +16,9 @@ def searchVerses(version: str) -> None:
     #dbpath
     dbpath = os.path.join(HealthCheck.getFiles(), "bibles", version)
     if not os.path.isdir(dbpath):
-        if version == "NET":
+        if version in ("KJV", "NET"):
             print("Start converting NET bible ...")
-            ConvertBible.convert_bible(os.path.join("data", "NET.bible"))
+            ConvertBible.convert_bible(os.path.join("data", "bibles", f"{version}.bible"))
         else:
             HealthCheck.print3(f"Bible version not found: {version}")
             return None
@@ -73,9 +73,22 @@ def searchVerses(version: str) -> None:
     return None
 
 def main():
+    # Create the parser
+    parser = argparse.ArgumentParser(description="SearchBibleAI CLI options")
+    # Add arguments
+    parser.add_argument("default", nargs="?", default=None, help="Specify a bible module, e.g. KJV, NET, etc.")
+    # Parse arguments
+    args = parser.parse_args()
+    # Get options
+    version = args.default.strip() if args.default and args.default.strip() else ""
+    if not version:
+        version = input("Enter a bible version (e.g. KJV, NET, etc.): ").strip()
+
+    # set up basic configs
     if not hasattr(config, "openaiApiKey"):
         HealthCheck.setBasicConfig()
-    version = input("Enter a bible version (e.g. NET): ").strip()
+
+    # search verses
     searchVerses(version=version if version else "NET")
 
 
