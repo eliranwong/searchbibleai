@@ -1,4 +1,4 @@
-import apsw, uuid, os, chromadb
+import apsw, uuid, os, chromadb, shutil
 from chromadb.config import Settings
 from searchbible.utils.BibleBooks import BibleBooks
 from searchbible.utils.AGBsubheadings import agbSubheadings
@@ -38,7 +38,10 @@ class ConvertBible:
             HealthCheck.print3(f"Removing old database: {dbpath}")
             shutil.rmtree(dbpath, ignore_errors=True)
         HealthCheck.print3(f"Creating database: {dbpath}")
+        # create directory for chromadb files
         Path(dbpath).mkdir(parents=True, exist_ok=True)
+        # keep all original data
+        shutil.copy(database, os.path.join(dbpath, "chroma.sqlite3"))
         # client
         chroma_client = chromadb.PersistentClient(dbpath, Settings(anonymized_telemetry=False))
         # collection
