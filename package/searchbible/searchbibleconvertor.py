@@ -1,0 +1,20 @@
+from searchbible.convertor.bible import ConvertBible
+import argparse
+
+def main():
+    # Create the parser
+    parser = argparse.ArgumentParser(description="SearchBibleAI Convertor CLI options")
+    # Add arguments
+    #parser.add_argument("default", nargs="?", default=None, help="default entry")
+    parser.add_argument('-b', '--bible', action='store', dest='bible', help="convert Unique Bible App bible database with -b flag")
+    # Parse arguments
+    args = parser.parse_args()
+    # Get options
+    #prompt = args.default.strip() if args.default and args.default.strip() else ""
+
+    if args.bible:
+        ConvertBible.convert_bible(args.bible.strip())
+
+
+if __name__ == '__main__':
+    main()
