@@ -1,4 +1,5 @@
 import apsw, uuid, os, chromadb
+from chromadb.config import Settings
 from searchbible.utils.BibleBooks import BibleBooks
 from searchbible.utils.AGBsubheadings import agbSubheadings
 from searchbible.utils.AGBparagraphs_expanded import agbParagraphs
@@ -39,7 +40,7 @@ class ConvertBible:
         HealthCheck.print3(f"Creating database: {dbpath}")
         Path(dbpath).mkdir(parents=True, exist_ok=True)
         # client
-        chroma_client = chromadb.PersistentClient(dbpath)
+        chroma_client = chromadb.PersistentClient(dbpath, Settings(anonymized_telemetry=False))
         # collection
         collectionVerse = chroma_client.get_or_create_collection(
             name="verses",

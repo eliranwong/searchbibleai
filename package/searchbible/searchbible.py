@@ -1,6 +1,7 @@
 from searchbible.health_check import HealthCheck
 from searchbible.convertor.bible import ConvertBible
 from searchbible import config
+from chromadb.config import Settings
 import os, chromadb, re
 
 
@@ -23,7 +24,7 @@ def searchVerses(version: str) -> None:
             return None
 
     # client
-    chroma_client = chromadb.PersistentClient(dbpath)
+    chroma_client = chromadb.PersistentClient(dbpath, Settings(anonymized_telemetry=False))
     # collection
     collection = chroma_client.get_or_create_collection(
         name="verses",
