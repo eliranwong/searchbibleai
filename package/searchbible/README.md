@@ -18,11 +18,11 @@ To specify a bible version for searches, e.g. KJV:
 
 To convert an UniqueBible App bible file, with a given path, e.g.:
 
-> searchbibleconvertor -b "/temp/KJV.bible"
+> searchbibleconverter -b "/temp/KJV.bible"
 
 # Progress
 
-1. Support conversion UnqiueBible App bibles (done)
+1. Support conversion of UnqiueBible App bibles (done)
 
 2. Build simple cli interface for reading single bible chapter (partial)
 

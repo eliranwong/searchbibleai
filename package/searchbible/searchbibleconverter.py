@@ -1,7 +1,12 @@
+from searchbible.health_check import HealthCheck
 from searchbible.convertor.bible import ConvertBible
 import argparse
 
 def main():
+    # set up basic configs
+    if not hasattr(config, "openaiApiKey"):
+        HealthCheck.setBasicConfig()
+
     # Create the parser
     parser = argparse.ArgumentParser(description="SearchBibleAI Convertor CLI options")
     # Add arguments

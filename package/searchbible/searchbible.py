@@ -17,7 +17,7 @@ def searchVerses(version: str) -> None:
     dbpath = os.path.join(HealthCheck.getFiles(), "bibles", version)
     if not os.path.isdir(dbpath):
         if version in ("KJV", "NET"):
-            print("Start converting NET bible ...")
+            print(f"Converting {version} bible ...")
             ConvertBible.convert_bible(os.path.join("data", "bibles", f"{version}.bible"))
         else:
             HealthCheck.print3(f"Bible version not found: {version}")
@@ -73,6 +73,10 @@ def searchVerses(version: str) -> None:
     return None
 
 def main():
+    # set up basic configs
+    if not hasattr(config, "openaiApiKey"):
+        HealthCheck.setBasicConfig()
+
     # Create the parser
     parser = argparse.ArgumentParser(description="SearchBibleAI CLI options")
     # Add arguments
@@ -83,10 +87,6 @@ def main():
     version = args.default.strip() if args.default and args.default.strip() else ""
     if not version:
         version = input("Enter a bible version (e.g. KJV, NET, etc.): ").strip()
-
-    # set up basic configs
-    if not hasattr(config, "openaiApiKey"):
-        HealthCheck.setBasicConfig()
 
     # search verses
     searchVerses(version=version if version else "NET")

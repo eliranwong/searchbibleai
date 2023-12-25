@@ -22,7 +22,7 @@ with open(os.path.join(package, "requirements.txt"), "r") as fileObj:
 # https://packaging.python.org/en/latest/guides/distributing-packages-using-setuptools/
 setup(
     name=package,
-    version="0.0.16",
+    version="0.0.19",
     python_requires=">=3.8",
     description="Search Bible AI - Integrate Unique Bible App resources with AI tools",
     long_description=long_description,
@@ -45,7 +45,7 @@ setup(
     entry_points={
         "console_scripts": [
             f"{package}={package}.{package}:main",
-            f"{package}convertor={package}.{package}convertor:main",
+            f"{package}converter={package}.{package}converter:main",
         ],
     },
     keywords="ai unique bible search openai google chatgpt gemini chromadb",
