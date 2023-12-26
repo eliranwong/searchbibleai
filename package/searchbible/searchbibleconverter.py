@@ -1,5 +1,6 @@
 from searchbible.health_check import HealthCheck
 from searchbible.convertor.bible import ConvertBible
+from searchbible import config
 import argparse
 
 def main():
