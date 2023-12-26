@@ -6,10 +6,12 @@ from packaging import version as ver
 from chromadb.config import Settings
 import os, chromadb, re, argparse
 
+thisFile = os.path.realpath(__file__)
+packageFolder = os.path.dirname(thisFile)
 
 # combined semantic and literal and regular expression searches
 
-def searchVerses(version: str) -> None:
+def search(version: str, paragraphs: bool = False) -> None:
 
     def getAndItems(query):
         splits = query.split("&&")
@@ -19,8 +21,8 @@ def searchVerses(version: str) -> None:
     dbpath = os.path.join(HealthCheck.getFiles(), "bibles", version)
     if not os.path.isdir(dbpath):
         if version in ("KJV", "NET"):
-            print(f"Converting {version} bible ...")
-            ConvertBible.convert_bible(os.path.join("data", "bibles", f"{version}.bible"))
+            HealthCheck.print3(f"Converting bible: {version} ...")
+            ConvertBible.convert_bible(os.path.join(packageFolder, "data", "bibles", f"{version}.bible"))
         else:
             HealthCheck.print3(f"Bible version not found: {version}")
             return None
@@ -29,7 +31,7 @@ def searchVerses(version: str) -> None:
     chroma_client = chromadb.PersistentClient(dbpath, Settings(anonymized_telemetry=False))
     # collection
     collection = chroma_client.get_or_create_collection(
-        name="verses",
+        name="paragraphs" if paragraphs else "verses",
         metadata={"hnsw:space": "cosine"},
         embedding_function=HealthCheck.getEmbeddingFunction(embeddingModel="all-mpnet-base-v2"),
     )
@@ -49,15 +51,20 @@ def searchVerses(version: str) -> None:
             pass
         return cc
 
+    abbrev = BibleBooks.abbrev["eng"]
+
     while True:
         # user input
-        HealthCheck.print2("SEARCH VERSES")
+        HealthCheck.print2(f"SEARCH {'PARAGRAPHS' if paragraphs else 'VERSES'}")
         print("--------------------")
         # search in books
         books = input("In books: ")
         books = BibleBooks.getBookCombo(books)
         if books:
-            books = {"book_abbr": {"$in": books}}
+            if paragraphs:
+                books = {"book_start": {"$in": books}}
+            else:
+                books = {"book": {"$in": books}}
         else:
             books = {}
         # search in chapters
@@ -85,8 +92,11 @@ def searchVerses(version: str) -> None:
                             pass
         else:
             cc = []
-        if chapters:
-            chapters = {"chapter": {"$in": cc}}
+        if cc:
+            if paragraphs:
+                chapters = {"$or": [{"$and": [{"chapter_start": {"$lte": c}}, {"chapter_end": {"$gte": c}}]} for c in cc]} if len(cc) > 1 else {"$and": [{"chapter_start": {"$lte": cc[0]}}, {"chapter_end": {"$gte": cc[0]}}]}
+            else:
+                chapters = {"chapter": {"$in": cc}}
         else:
             chapters = {}
 
@@ -136,17 +146,36 @@ def searchVerses(version: str) -> None:
                 where_document=contains if contains else None,
             )
         print("--------------------")
-        print(">>> retrieved verses: \n")
-        metadatas = res["metadatas"][0] if meaning else res["metadatas"]
-        verses = [(i["book_abbr"], i["book"], i["chapter"], i["verse"], res["documents"][0][index] if meaning else res["documents"][index]) for index, i in enumerate(metadatas)]
+        print(f">>> Retrieved {'paragraphs' if paragraphs else 'verses'}: \n")
+
+        if meaning:
+            metadatas = res["metadatas"][0]
+            documents = res["documents"][0]
+        else:
+            metadatas = res["metadatas"]
+            documents = res["documents"]
+
+        if paragraphs:
+            verses = [(metadata["start"], metadata["book_start"], metadata["chapter_start"], metadata["verse_start"], metadata["chapter_end"], metadata["verse_end"], document) for metadata, document in zip(metadatas, documents)]
+        else:
+            verses = [(metadata["reference"], metadata["book"], metadata["chapter"], metadata["verse"], document) for metadata, document in zip(metadatas, documents)]
+        
         if not meaning:
             # sorting for non-semantic search
-            verses = sorted(verses, key=lambda x: ver.parse(f"{x[1]}.{x[2]}.{x[3]}"))
-        for book_abbr, _, chapter, verse, scripture in verses:
-            if not regex or (regex and re.search(regex, scripture, flags=re.IGNORECASE)):
-                print(f"({book_abbr} {chapter}:{verse}) {scripture.strip()}")
+            verses = sorted(verses, key=lambda x: ver.parse(x[0]))
+
+        if paragraphs:
+            for _, book, chapter, verse, chapter_end, verse_end, scripture in verses:
+                book_abbr = abbrev[str(book)][0]
+                if not regex or (regex and re.search(regex, scripture, flags=re.I|re.M)):
+                    HealthCheck.print2(f"# {book_abbr} {chapter}:{verse}-{chapter_end}:{verse_end}")
+                    print(f"## {scripture.strip()}\n")
+        else:
+            for _, book, chapter, verse, scripture in verses:
+                book_abbr = abbrev[str(book)][0]
+                if not regex or (regex and re.search(regex, scripture, flags=re.IGNORECASE)):
+                    print(f"({book_abbr} {chapter}:{verse}) {scripture.strip()}")
         print("--------------------")
-    return None
 
 def main():
     # set up basic configs
@@ -165,7 +194,7 @@ def main():
         version = input("Enter a bible version (e.g. KJV, NET, etc.): ").strip()
 
     # search verses
-    searchVerses(version=version if version else "NET")
+    search(version=version if version else "NET")
 
 
 if __name__ == '__main__':

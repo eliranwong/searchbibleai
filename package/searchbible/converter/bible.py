@@ -1,6 +1,5 @@
 import apsw, uuid, os, chromadb, shutil
 from chromadb.config import Settings
-from searchbible.utils.BibleBooks import BibleBooks
 from searchbible.utils.AGBsubheadings import agbSubheadings
 from searchbible.utils.AGBparagraphs_expanded import agbParagraphs
 from searchbible.health_check import HealthCheck
@@ -21,7 +20,7 @@ class ConvertBible:
         else:
             version = os.path.basename(database)[:-6]
         
-        def getAllVerses(bible=version):
+        def getAllVerses():
             # get all verses from Unique Bible App bible file
             with apsw.Connection(database) as connection:
                 cursor = connection.cursor()
@@ -71,10 +70,7 @@ class ConvertBible:
             for book, chapter, verse, scripture in pb(getAllVerses()):
                 bcv = f"{book}.{chapter}.{verse}"
 
-                abbrev = BibleBooks.abbrev["eng"]
-                book_abbr = abbrev[str(book)][0]
                 metadata = {
-                    "book_abbr": book_abbr,
                     "book": book,
                     "chapter": chapter,
                     "verse": verse,
@@ -109,18 +105,18 @@ class ConvertBible:
                         )
                     paragraphTitle = agbSubheadings.get(bcv)
                     paragraphStart = bcv
-                    paragraphStartB = str(book)
-                    paragraphStartC = str(chapter)
-                    paragraphStartV = str(verse)
+                    paragraphStartB = book
+                    paragraphStartC = chapter
+                    paragraphStartV = verse
                     paragraphContent = f"{paragraphTitle}\n{chapter}:{verse} {scripture}"
                 else:
                     if (book, chapter, verse) in agbParagraphs:
                         paragraphContent += "\n"
                     paragraphContent += f"\n{chapter}:{verse} {scripture}"
                 paragraphEnd = bcv
-                paragraphEndB = str(book)
-                paragraphEndC = str(chapter)
-                paragraphEndV = str(verse)
+                paragraphEndB = book
+                paragraphEndC = chapter
+                paragraphEndV = verse
 
             # save the last paragraph
             metadata = {

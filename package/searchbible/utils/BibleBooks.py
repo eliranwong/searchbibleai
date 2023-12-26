@@ -2430,7 +2430,48 @@ class BibleBooks:
         return name2number
 
     @staticmethod
-    def getBookCombo(books: str) -> list:
+    def getBookCombo(books: str) -> list[int]:
+        name2number = BibleBooks.getNameToNumber2()
+
+        def getBookRange(i):
+            bb = []
+            try:
+                rangeStart, rangeEnd = [ii.strip() for ii in i.split("-")]
+                if rangeStart in name2number and rangeEnd in name2number:
+                    rangeStart, rangeEnd = int(name2number.get(rangeStart)), int(name2number.get(rangeEnd))
+                    if rangeEnd > rangeStart:
+                        for ii in range(rangeStart, rangeEnd):
+                            bb.append(ii)
+                        bb.append(rangeEnd)
+                    else:
+                        bb.append(rangeStart)
+            except:
+                pass
+            return bb
+
+        if books := books.lower().strip():
+            splits = books.split("||")
+            if len(splits) == 1:
+                if "-" in books:
+                    return getBookRange(books)
+                elif books in name2number:
+                    return [name2number[books]]
+                else:
+                    return []
+            else:
+                bb = []
+                for i in splits:
+                    i = i.strip()
+                    if "-" in i:
+                        bb += getBookRange(i)
+                    elif i in name2number:
+                        bb.append(name2number[i])
+                return bb
+        else:
+            return []
+
+    @staticmethod
+    def getBookNameCombo(books: str) -> list[str]:
         abbrev = BibleBooks.abbrev["eng"]
         name2number = BibleBooks.getNameToNumber2()
 
@@ -2450,21 +2491,19 @@ class BibleBooks:
                 pass
             return bb
 
-        if books := books.strip():
+        if books := books.lower().strip():
             splits = books.split("||")
             if len(splits) == 1:
                 if "-" in books:
-                    return getBookRange(books.lower())
-                elif books in abbrev:
-                    return [books]
-                elif books.lower() in name2number:
-                    return [abbrev[str(name2number.get(books.lower()))][0]]
+                    return getBookRange(books)
+                elif books in name2number:
+                    return [abbrev[str(name2number[books])][0]]
                 else:
                     return []
             else:
                 bb = []
                 for i in splits:
-                    i = i.lower().strip()
+                    i = i.strip()
                     if "-" in i:
                         bb += getBookRange(i)
                     elif i in name2number:

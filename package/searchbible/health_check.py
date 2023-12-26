@@ -183,6 +183,10 @@ class HealthCheck:
             config.print3 = HealthCheck.print3
 
     @staticmethod
+    def print(content):
+        print_formatted_text(HTML(content))
+
+    @staticmethod
     def print2(content):
         print_formatted_text(HTML(f"<{config.terminalPromptIndicatorColor2}>{content}</{config.terminalPromptIndicatorColor2}>"))
 
