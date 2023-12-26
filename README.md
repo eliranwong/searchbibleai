@@ -55,3 +55,5 @@ To convert an UniqueBible App bible file, with a given path, e.g.:
 * support semantic searches (i.e. search for meaning); both in verses and paragraphs
 
 * combination of literal search, semantic search and regular expression search in a single search
+
+* more to be added
