@@ -47,6 +47,16 @@ class HealthCheck:
         config.includeIpInSystemMessage = False
         config.wrapWords = True
         config.pygments_style = ""
+        # work with bible verse parser
+        config.noOfLinesPerChunkForParsing = 100
+        config.parseEnglishBooksOnly = False
+        config.useLiteVerseParsing = False
+        config.standardAbbreviation = "ENG"
+        config.convertChapterVerseDotSeparator = True
+        config.parseBookChapterWithoutSpace = True
+        config.parseBooklessReferences = True
+        config.parseClearSpecialCharacters = False
+        config.parserStandarisation = "NO"
         HealthCheck.setPrint()
 
     @staticmethod
@@ -84,20 +94,23 @@ class HealthCheck:
     @staticmethod
     def simplePrompt(inputIndicator="", validator=None, default="", accept_default=False, completer=None, promptSession=None, style=None, is_password=False, bottom_toolbar=None):
         this_key_bindings = KeyBindings()
+
         @this_key_bindings.add("c-q")
         def _(event):
             buffer = event.app.current_buffer
             buffer.text = config.exit_entry
             buffer.validate_and_handle()
-        @this_key_bindings.add("c-n")
+        @this_key_bindings.add("c-f")
         def _(event):
             buffer = event.app.current_buffer
-            config.defaultEntry = buffer.text
-            buffer.text = ".new"
+            buffer.text = ".verses"
             buffer.validate_and_handle()
-        @this_key_bindings.add("c-g")
-        def _(_):
-            config.launchPager()
+        @this_key_bindings.add("c-p")
+        def _(event):
+            buffer = event.app.current_buffer
+            buffer.text = ".paragraphs"
+            buffer.validate_and_handle()
+
         this_key_bindings = merge_key_bindings([
             this_key_bindings,
             prompt_shared_key_bindings,
@@ -177,10 +190,14 @@ class HealthCheck:
 
     @staticmethod
     def setPrint():
+        if not hasattr(config, "print"):
+            config.print = HealthCheck.print
         if not hasattr(config, "print2"):
             config.print2 = HealthCheck.print2
         if not hasattr(config, "print3"):
             config.print3 = HealthCheck.print3
+        if not hasattr(config, "print4"):
+            config.print4 = HealthCheck.print4
 
     @staticmethod
     def print(content):
@@ -196,6 +213,15 @@ class HealthCheck:
         if len(splittedContent) == 2:
             key, value = splittedContent
             print_formatted_text(HTML(f"<{config.terminalPromptIndicatorColor2}>{key}:</{config.terminalPromptIndicatorColor2}> {value}"))
+        else:
+            config.print2(splittedContent)
+
+    @staticmethod
+    def print4(content):
+        splittedContent = content.split(") ", 1)
+        if len(splittedContent) == 2:
+            key, value = splittedContent
+            print_formatted_text(HTML(f"<{config.terminalPromptIndicatorColor2}>{key})</{config.terminalPromptIndicatorColor2}> {value}"))
         else:
             config.print2(splittedContent)
 

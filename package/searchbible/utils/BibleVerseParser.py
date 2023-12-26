@@ -47,7 +47,7 @@ from searchbible import config
 import re, glob, sys
 from ast import literal_eval
 from searchbible.utils.BibleBooks import BibleBooks
-from searchbible.utils.BibleBooks import RegexSearch
+from searchbible.utils.RegexSearch import RegexSearch
 
 """
 START - class BibleVerseParser

@@ -22,7 +22,7 @@ with open(os.path.join(package, "requirements.txt"), "r") as fileObj:
 # https://packaging.python.org/en/latest/guides/distributing-packages-using-setuptools/
 setup(
     name=package,
-    version="0.0.25",
+    version="0.0.29",
     python_requires=">=3.8",
     description="Search Bible AI - Integrate Unique Bible App resources with AI tools",
     long_description=long_description,
@@ -30,6 +30,7 @@ setup(
     author_email="support@letmedoit.ai",
     packages=[
         package,
+        f"{package}.db",
         f"{package}.utils",
         f"{package}.converter",
         f"{package}.data",
@@ -37,6 +38,7 @@ setup(
     ],
     package_data={
         package: ["*.*"],
+        f"{package}.db": ["*.*"],
         f"{package}.utils": ["*.*"],
         f"{package}.converter": ["*.*"],
         f"{package}.data": ["*.*"],

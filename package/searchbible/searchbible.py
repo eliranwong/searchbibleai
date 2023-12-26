@@ -1,31 +1,100 @@
 from searchbible.health_check import HealthCheck
-from searchbible.converter.bible import ConvertBible
 from searchbible.utils.BibleBooks import BibleBooks
+from searchbible.utils.BibleVerseParser import BibleVerseParser
+from searchbible.db.Bible import Bible
 from searchbible import config
-from packaging import version as ver
+from packaging import version
 from chromadb.config import Settings
 import os, chromadb, re, argparse
+from prompt_toolkit.styles import Style
+from prompt_toolkit import PromptSession
+from prompt_toolkit.history import FileHistory
+from pathlib import Path
+
+# set up basic configs
+if not hasattr(config, "openaiApiKey"):
+    HealthCheck.setBasicConfig()
 
 thisFile = os.path.realpath(__file__)
-packageFolder = os.path.dirname(thisFile)
+config.packageFolder = os.path.dirname(thisFile)
+abbrev = BibleBooks.abbrev["eng"]
+config.divider = "--------------------"
 
-# combined semantic and literal and regular expression searches
+historyFolder = os.path.join(HealthCheck.getFiles(), "history")
+Path(historyFolder).mkdir(parents=True, exist_ok=True)
+read_history = os.path.join(historyFolder, "read")
+read_session = PromptSession(history=FileHistory(read_history))
 
-def search(version: str, paragraphs: bool = False) -> None:
+promptStyle = Style.from_dict({
+    # User input (default text).
+    "": config.terminalCommandEntryColor2,
+    # Prompt.
+    "indicator": config.terminalPromptIndicatorColor2,
+})
+
+def read(bible: str = "NET"):
+    HealthCheck.print2("Search Bible AI")
+    HealthCheck.print3("Developed by: Eliran Wong")
+    HealthCheck.print3("Open source: https://github.com/eliranwong/searchbibleai")
+    HealthCheck.print2(config.divider)
+    HealthCheck.print("* enter a single reference to display a full chapter")
+    HealthCheck.print("* enter multiple references to display verses")
+    HealthCheck.print("* enter '.verses' or press 'Ctrl+F' to search verses")
+    HealthCheck.print("* enter '.paragraphs' or press 'Ctrl+P' to search paragraphs")
+    HealthCheck.print(f"* enter '{config.exit_entry}' or press 'Ctrl+Q' to exit current feature of quit this app")
+    HealthCheck.print2(config.divider)
+
+    parser = BibleVerseParser(config.parserStandarisation)
+    while True:
+        userInput = HealthCheck.simplePrompt(style=promptStyle, promptSession=read_session)
+        if userInput == config.exit_entry:
+            HealthCheck.print2("Closing ...")
+            break
+        elif userInput == ".verses":
+            # ctrl+f to search verses
+            search(bible=bible, paragraphs=False)
+        elif userInput == ".paragraphs":
+            # ctrl+p to search paragraphs
+            search(bible=bible, paragraphs=True)
+        elif userInput:
+            refs = parser.extractAllReferences(userInput)
+            if not refs:
+                HealthCheck.print2("No reference is found!")
+                return None
+
+            isChapter = (len(refs) == 1 and len(refs[0]) == 3)
+            HealthCheck.print2(config.divider)
+            if isChapter:
+                # check if it is a single reference; display a full chapter
+                fullChapter, verses = Bible.getVerses(refs, bible)
+                chapterTitle = False
+                for _, book, chapter, verse, scripture in fullChapter:
+                    if not chapterTitle:
+                        book_abbr = abbrev[str(book)][0]
+                        HealthCheck.print2(f"# {book_abbr} {chapter}")
+                        chapterTitle = True
+                    HealthCheck.print4(f"({verse}) {scripture.strip()}")
+                # draw a whole chapter
+                HealthCheck.print2(config.divider)
+            else:
+                verses = Bible.getVerses(refs, bible)
+            # display all verses
+            for _, book, chapter, verse, scripture in verses:
+                book_abbr = abbrev[str(book)][0]
+                HealthCheck.print4(f"({book_abbr} {chapter}:{verse}) {scripture.strip()}")
+            HealthCheck.print2(config.divider)
+
+# combined semantic searches, literal searches and regular expression searches
+def search(bible: str = "NET", paragraphs: bool = False) -> None:
 
     def getAndItems(query):
         splits = query.split("&&")
         return {"$and": [{"$contains": i} for i in splits]} if len(splits) > 1 else {"$contains": query}
 
     #dbpath
-    dbpath = os.path.join(HealthCheck.getFiles(), "bibles", version)
-    if not os.path.isdir(dbpath):
-        if version in ("KJV", "NET"):
-            HealthCheck.print3(f"Converting bible: {version} ...")
-            ConvertBible.convert_bible(os.path.join(packageFolder, "data", "bibles", f"{version}.bible"))
-        else:
-            HealthCheck.print3(f"Bible version not found: {version}")
-            return None
+    dbpath = Bible.getDbPath(bible)
+    if not dbpath:
+        return None
 
     # client
     chroma_client = chromadb.PersistentClient(dbpath, Settings(anonymized_telemetry=False))
@@ -51,137 +120,130 @@ def search(version: str, paragraphs: bool = False) -> None:
             pass
         return cc
 
-    abbrev = BibleBooks.abbrev["eng"]
-
-    while True:
-        # user input
-        HealthCheck.print2(f"SEARCH {'PARAGRAPHS' if paragraphs else 'VERSES'}")
-        print("--------------------")
-        # search in books
-        books = input("In books: ")
-        books = BibleBooks.getBookCombo(books)
-        if books:
-            if paragraphs:
-                books = {"book_start": {"$in": books}}
-            else:
-                books = {"book": {"$in": books}}
+    # user input
+    HealthCheck.print2(f"SEARCH {'PARAGRAPHS' if paragraphs else 'VERSES'}")
+    HealthCheck.print2(config.divider)
+    # search in books
+    books = input("In books: ")
+    books = BibleBooks.getBookCombo(books)
+    if books:
+        if paragraphs:
+            books = {"book_start": {"$in": books}}
         else:
-            books = {}
-        # search in chapters
-        chapters = input("In chapters: ")
-        if chapters := chapters.strip():
-            splits = chapters.split("||")
-            if len(splits) == 1:
-                if "-" in chapters:
-                    cc = getChapterRange(chapters)
-                else:
-                    try:
-                        cc = [int(chapters)]
-                    except:
-                        cc = []
+            books = {"book": {"$in": books}}
+    else:
+        books = {}
+    # search in chapters
+    chapters = input("In chapters: ")
+    if chapters := chapters.strip():
+        splits = chapters.split("||")
+        if len(splits) == 1:
+            if "-" in chapters:
+                cc = getChapterRange(chapters)
             else:
-                cc = []
-                for i in splits:
-                    i = i.lower().strip()
-                    if "-" in i:
-                        cc += getChapterRange(i)
-                    else:
-                        try:
-                            cc.append(int(i))
-                        except:
-                            pass
+                try:
+                    cc = [int(chapters)]
+                except:
+                    cc = []
         else:
             cc = []
-        if cc:
-            if paragraphs:
-                chapters = {"$or": [{"$and": [{"chapter_start": {"$lte": c}}, {"chapter_end": {"$gte": c}}]} for c in cc]} if len(cc) > 1 else {"$and": [{"chapter_start": {"$lte": cc[0]}}, {"chapter_end": {"$gte": cc[0]}}]}
-            else:
-                chapters = {"chapter": {"$in": cc}}
+            for i in splits:
+                i = i.lower().strip()
+                if "-" in i:
+                    cc += getChapterRange(i)
+                else:
+                    try:
+                        cc.append(int(i))
+                    except:
+                        pass
+    else:
+        cc = []
+    if cc:
+        if paragraphs:
+            chapters = {"$or": [{"$and": [{"chapter_start": {"$lte": c}}, {"chapter_end": {"$gte": c}}]} for c in cc]} if len(cc) > 1 else {"$and": [{"chapter_start": {"$lte": cc[0]}}, {"chapter_end": {"$gte": cc[0]}}]}
         else:
-            chapters = {}
+            chapters = {"chapter": {"$in": cc}}
+    else:
+        chapters = {}
 
-        # search for plain words
-        contains = input("Search for plain words: ")
-        if contains.strip():
-            splits = contains.split("||")
-            contains = {"$or": [getAndItems(i) for i in splits]} if len(splits) > 1 else getAndItems(contains)
-        else:
-            contains = ""
-        # search for meaning
-        meaning = input("Search for meaning: ")
-        # search for regex
-        regex = input("Search for regular expression: ")
+    # search for plain words
+    contains = input("Search for plain words: ")
+    if contains.strip():
+        splits = contains.split("||")
+        contains = {"$or": [getAndItems(i) for i in splits]} if len(splits) > 1 else getAndItems(contains)
+    else:
+        contains = ""
+    # search for meaning
+    meaning = input("Search for meaning: ")
+    # search for regex
+    regex = input("Search for regular expression: ")
 
-        # formulate where filter
-        if books and chapters:
-            where = {"$and": [books, chapters]}
-        elif books:
-            where = books
-        elif chapters:
-            where = chapters
-        else:
-            where = None
+    # formulate where filter
+    if books and chapters:
+        where = {"$and": [books, chapters]}
+    elif books:
+        where = books
+    elif chapters:
+        where = chapters
+    else:
+        where = None
 
-        if meaning:
-            # specify number of closest matches
-            default_n_results = 10
-            n_results = input("Number of closest matches: ")
-            if n_results:
-                try:
-                    n_results = int(n_results)
-                except:
-                    n_results = default_n_results
-            else:
+    if meaning:
+        # specify number of closest matches
+        default_n_results = 10
+        n_results = input("Number of closest matches: ")
+        if n_results:
+            try:
+                n_results = int(n_results)
+            except:
                 n_results = default_n_results
-            # run query
-            res = collection.query(
-                query_texts=[meaning],
-                n_results = n_results,
-                where=where,
-                where_document=contains if contains else None,
-            )
         else:
-            res = collection.get(
-                where=where,
-                where_document=contains if contains else None,
-            )
-        print("--------------------")
-        print(f">>> Retrieved {'paragraphs' if paragraphs else 'verses'}: \n")
+            n_results = default_n_results
+        # run query
+        res = collection.query(
+            query_texts=[meaning],
+            n_results = n_results,
+            where=where,
+            where_document=contains if contains else None,
+        )
+    else:
+        res = collection.get(
+            where=where,
+            where_document=contains if contains else None,
+        )
+    HealthCheck.print2(config.divider)
+    print(f">>> Retrieved {'paragraphs' if paragraphs else 'verses'}: \n")
 
-        if meaning:
-            metadatas = res["metadatas"][0]
-            documents = res["documents"][0]
-        else:
-            metadatas = res["metadatas"]
-            documents = res["documents"]
+    if meaning:
+        metadatas = res["metadatas"][0]
+        documents = res["documents"][0]
+    else:
+        metadatas = res["metadatas"]
+        documents = res["documents"]
 
-        if paragraphs:
-            verses = [(metadata["start"], metadata["book_start"], metadata["chapter_start"], metadata["verse_start"], metadata["chapter_end"], metadata["verse_end"], document) for metadata, document in zip(metadatas, documents)]
-        else:
-            verses = [(metadata["reference"], metadata["book"], metadata["chapter"], metadata["verse"], document) for metadata, document in zip(metadatas, documents)]
-        
-        if not meaning:
-            # sorting for non-semantic search
-            verses = sorted(verses, key=lambda x: ver.parse(x[0]))
+    if paragraphs:
+        verses = [(metadata["start"], metadata["book_start"], metadata["chapter_start"], metadata["verse_start"], metadata["chapter_end"], metadata["verse_end"], document) for metadata, document in zip(metadatas, documents)]
+    else:
+        verses = [(metadata["reference"], metadata["book"], metadata["chapter"], metadata["verse"], document) for metadata, document in zip(metadatas, documents)]
+    
+    if not meaning:
+        # sorting for non-semantic search
+        verses = sorted(verses, key=lambda x: version.parse(x[0]))
 
-        if paragraphs:
-            for _, book, chapter, verse, chapter_end, verse_end, scripture in verses:
-                book_abbr = abbrev[str(book)][0]
-                if not regex or (regex and re.search(regex, scripture, flags=re.I|re.M)):
-                    HealthCheck.print2(f"# {book_abbr} {chapter}:{verse}-{chapter_end}:{verse_end}")
-                    print(f"## {scripture.strip()}\n")
-        else:
-            for _, book, chapter, verse, scripture in verses:
-                book_abbr = abbrev[str(book)][0]
-                if not regex or (regex and re.search(regex, scripture, flags=re.IGNORECASE)):
-                    print(f"({book_abbr} {chapter}:{verse}) {scripture.strip()}")
-        print("--------------------")
+    if paragraphs:
+        for _, book, chapter, verse, chapter_end, verse_end, scripture in verses:
+            book_abbr = abbrev[str(book)][0]
+            if not regex or (regex and re.search(regex, scripture, flags=re.I|re.M)):
+                HealthCheck.print2(f"# {book_abbr} {chapter}:{verse}-{chapter_end}:{verse_end}")
+                print(f"## {scripture.strip()}\n")
+    else:
+        for _, book, chapter, verse, scripture in verses:
+            book_abbr = abbrev[str(book)][0]
+            if not regex or (regex and re.search(regex, scripture, flags=re.IGNORECASE)):
+                print(f"({book_abbr} {chapter}:{verse}) {scripture.strip()}")
+    HealthCheck.print2(config.divider)
 
 def main():
-    # set up basic configs
-    if not hasattr(config, "openaiApiKey"):
-        HealthCheck.setBasicConfig()
-
     # Create the parser
     parser = argparse.ArgumentParser(description="SearchBibleAI CLI options")
     # Add arguments
@@ -189,12 +251,15 @@ def main():
     # Parse arguments
     args = parser.parse_args()
     # Get options
-    version = args.default.strip() if args.default and args.default.strip() else ""
-    if not version:
-        version = input("Enter a bible version (e.g. KJV, NET, etc.): ").strip()
+    bible = args.default.strip() if args.default and args.default.strip() else ""
+    if not bible:
+        bible = input("Enter a bible version (e.g. KJV, NET, etc.): ").strip()
 
+    read(bible=bible if bible else "NET")
     # search verses
-    search(version=version if version else "NET")
+    #search(bible=bible if bible else "NET")
+    # search paragraphs
+    #search(bible=bible if bible else "NET", paragraphs=True)
 
 
 if __name__ == '__main__':
