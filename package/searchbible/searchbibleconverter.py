@@ -1,5 +1,5 @@
 from searchbible.health_check import HealthCheck
-from searchbible.convertor.bible import ConvertBible
+from searchbible.converter.bible import ConvertBible
 from searchbible import config
 import argparse
 
@@ -9,7 +9,7 @@ def main():
         HealthCheck.setBasicConfig()
 
     # Create the parser
-    parser = argparse.ArgumentParser(description="SearchBibleAI Convertor CLI options")
+    parser = argparse.ArgumentParser(description="SearchBibleAI Converter CLI options")
     # Add arguments
     #parser.add_argument("default", nargs="?", default=None, help="default entry")
     parser.add_argument('-b', '--bible', action='store', dest='bible', help="convert Unique Bible App bible database with -b flag")

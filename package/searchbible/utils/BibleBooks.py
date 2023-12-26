@@ -2417,7 +2417,61 @@ class BibleBooks:
         if book in BibleBooks.chapters.keys():
             return BibleBooks.chapters[book]
         else:
-            return 100
+            return 200
+
+    @staticmethod
+    def getNameToNumber2() -> dict:
+        name2number = {}
+        for i in BibleBooks.name2number:
+            if i.endswith("."):
+                name2number[i[:-1].lower()] = int(BibleBooks.name2number[i])
+            else:
+                name2number[i.lower()] = int(BibleBooks.name2number[i])
+        return name2number
+
+    @staticmethod
+    def getBookCombo(books: str) -> list:
+        abbrev = BibleBooks.abbrev["eng"]
+        name2number = BibleBooks.getNameToNumber2()
+
+        def getBookRange(i):
+            bb = []
+            try:
+                rangeStart, rangeEnd = [ii.strip() for ii in i.split("-")]
+                if rangeStart in name2number and rangeEnd in name2number:
+                    rangeStart, rangeEnd = int(name2number.get(rangeStart)), int(name2number.get(rangeEnd))
+                    if rangeEnd > rangeStart:
+                        for ii in range(rangeStart, rangeEnd):
+                            bb.append(abbrev[str(ii)][0])
+                        bb.append(abbrev[str(rangeEnd)][0])
+                    else:
+                        bb.append(abbrev[str(rangeStart)][0])
+            except:
+                pass
+            return bb
+
+        if books := books.strip():
+            splits = books.split("||")
+            if len(splits) == 1:
+                if "-" in books:
+                    return getBookRange(books.lower())
+                elif books in abbrev:
+                    return [books]
+                elif books.lower() in name2number:
+                    return [abbrev[str(name2number.get(books.lower()))][0]]
+                else:
+                    return []
+            else:
+                bb = []
+                for i in splits:
+                    i = i.lower().strip()
+                    if "-" in i:
+                        bb += getBookRange(i)
+                    elif i in name2number:
+                        bb.append(abbrev[str(name2number[i])][0])
+                return bb
+        else:
+            return []
 
     def getAllKJVreferences(self, lang=None):
         if lang is None:
