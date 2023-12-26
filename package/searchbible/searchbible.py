@@ -2,6 +2,7 @@ from searchbible.health_check import HealthCheck
 from searchbible.converter.bible import ConvertBible
 from searchbible.utils.BibleBooks import BibleBooks
 from searchbible import config
+from packaging import version as ver
 from chromadb.config import Settings
 import os, chromadb, re, argparse
 
@@ -102,7 +103,6 @@ def searchVerses(version: str) -> None:
         regex = input("Search for regular expression: ")
 
         # formulate where filter
-        #print(books, chapters)
         if books and chapters:
             where = {"$and": [books, chapters]}
         elif books:
@@ -138,11 +138,13 @@ def searchVerses(version: str) -> None:
         print("--------------------")
         print(">>> retrieved verses: \n")
         metadatas = res["metadatas"][0] if meaning else res["metadatas"]
-        refs = [f'''{i["book_abbr"]} {i["chapter"]}:{i["verse"]}''' for i in metadatas]
-        # results = filter(lambda scripture: re.search(regex, scripture, flags=re.IGNORECASE), zip(refs, res["documents"][0] if meaning else res["documents"]))
-        for ref, scripture in zip(refs, res["documents"][0] if meaning else res["documents"]):
+        verses = [(i["book_abbr"], i["book"], i["chapter"], i["verse"], res["documents"][0][index] if meaning else res["documents"][index]) for index, i in enumerate(metadatas)]
+        if not meaning:
+            # sorting for non-semantic search
+            verses = sorted(verses, key=lambda x: ver.parse(f"{x[1]}.{x[2]}.{x[3]}"))
+        for book_abbr, _, chapter, verse, scripture in verses:
             if not regex or (regex and re.search(regex, scripture, flags=re.IGNORECASE)):
-                print(f"({ref}) {scripture}")
+                print(f"({book_abbr} {chapter}:{verse}) {scripture.strip()}")
         print("--------------------")
     return None
 
