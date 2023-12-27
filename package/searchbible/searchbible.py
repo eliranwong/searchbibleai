@@ -1,6 +1,7 @@
 from searchbible.health_check import HealthCheck
 from searchbible.utils.BibleBooks import BibleBooks
 from searchbible.utils.BibleVerseParser import BibleVerseParser
+from searchbible.utils.prompt_validator import NumberValidator
 from searchbible.db.Bible import Bible
 from searchbible import config
 from packaging import version
@@ -37,6 +38,8 @@ search_literal_history = os.path.join(historyFolder, "search_literal")
 search_literal_session = PromptSession(history=FileHistory(search_literal_history))
 search_semantic_history = os.path.join(historyFolder, "search_semantic")
 search_semantic_session = PromptSession(history=FileHistory(search_semantic_history))
+search_closest_match_history = os.path.join(historyFolder, "search_closest_match")
+search_closest_match_session = PromptSession(history=FileHistory(search_closest_match_history))
 search_regex_history = os.path.join(historyFolder, "search_regex")
 search_regex_session = PromptSession(history=FileHistory(search_regex_history))
 
@@ -139,7 +142,8 @@ def search(bible:str="NET", paragraphs:bool=False) -> None:
     HealthCheck.print2(f"SEARCH {'PARAGRAPHS' if paragraphs else 'VERSES'}")
     HealthCheck.print2(config.divider)
     # search in books
-    HealthCheck.print3("In books (use '||' for combo, '-' for range): e.g. Gen||Matt-John||Rev")
+    HealthCheck.print3("In books (use '||' for combo, '-' for range):")
+    print("e.g. Gen||Matt-John||Rev")
     books = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_book_session, completer=book_completer)
     if books.lower() == "all":
         books = ""
@@ -152,8 +156,9 @@ def search(bible:str="NET", paragraphs:bool=False) -> None:
     else:
         books = {}
     # search in chapters
-    HealthCheck.print3("In chapters (use '||' for combo, '-' for range): e.g. 2||4||6-8||10")
-    chapters = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_chapter_session)
+    HealthCheck.print3("In chapters (use '||' for combo, '-' for range):")
+    print("e.g. 2||4||6-8||10")
+    chapters = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_chapter_session, validator=NumberValidator())
     if chapters := chapters.strip():
         splits = chapters.split("||")
         if len(splits) == 1:
@@ -186,7 +191,8 @@ def search(bible:str="NET", paragraphs:bool=False) -> None:
         chapters = {}
 
     # search for plain words
-    HealthCheck.print3("Search for plain words ('||' denotes 'or'; '&amp;&amp;' denotes 'and'): e.g. Lord&amp;&amp;God||Jesus&amp;&amp;love")
+    HealthCheck.print3("Search for plain words ('||' denotes 'or'; '&amp;&amp;' denotes 'and'):")
+    print("e.g. Lord&amp;&amp;God||Jesus&amp;&amp;love")
     contains = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_literal_session)
     if contains.strip():
         splits = contains.split("||")
@@ -196,6 +202,13 @@ def search(bible:str="NET", paragraphs:bool=False) -> None:
     # search for meaning
     HealthCheck.print3("Search for meaning:")
     meaning = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_semantic_session)
+    if meaning:
+        HealthCheck.print3("Maximum number of closest matches:")
+        # specify number of closest matches
+        default_n_results = 10
+        n_results = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_closest_match_session, validator=NumberValidator())
+        if not n_results or n_results <= 0:
+            n_results = default_n_results
     # search for regex
     HealthCheck.print3("Search for regular expression:")
     regex = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_regex_session)
@@ -211,16 +224,6 @@ def search(bible:str="NET", paragraphs:bool=False) -> None:
         where = None
 
     if meaning:
-        # specify number of closest matches
-        default_n_results = 10
-        n_results = input("Number of closest matches: ")
-        if n_results:
-            try:
-                n_results = int(n_results)
-            except:
-                n_results = default_n_results
-        else:
-            n_results = default_n_results
         # run query
         res = collection.query(
             query_texts=[meaning],
