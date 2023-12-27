@@ -9,6 +9,7 @@ import os, chromadb, re, argparse
 from prompt_toolkit.styles import Style
 from prompt_toolkit import PromptSession
 from prompt_toolkit.history import FileHistory
+from prompt_toolkit.completion import WordCompleter
 from pathlib import Path
 
 # set up basic configs
@@ -24,6 +25,20 @@ historyFolder = os.path.join(HealthCheck.getFiles(), "history")
 Path(historyFolder).mkdir(parents=True, exist_ok=True)
 read_history = os.path.join(historyFolder, "read")
 read_session = PromptSession(history=FileHistory(read_history))
+read_suggestions = [i[0] for i in abbrev.values()]
+read_completer = WordCompleter(read_suggestions, ignore_case=True)
+search_book_history = os.path.join(historyFolder, "search_book")
+search_book_session = PromptSession(history=FileHistory(search_book_history))
+book_suggestions = ["ALL"] + [i[0] for i in abbrev.values()]
+book_completer = WordCompleter(book_suggestions, ignore_case=True)
+search_chapter_history = os.path.join(historyFolder, "search_chapter")
+search_chapter_session = PromptSession(history=FileHistory(search_chapter_history))
+search_literal_history = os.path.join(historyFolder, "search_literal")
+search_literal_session = PromptSession(history=FileHistory(search_literal_history))
+search_semantic_history = os.path.join(historyFolder, "search_semantic")
+search_semantic_session = PromptSession(history=FileHistory(search_semantic_history))
+search_regex_history = os.path.join(historyFolder, "search_regex")
+search_regex_session = PromptSession(history=FileHistory(search_regex_history))
 
 promptStyle = Style.from_dict({
     # User input (default text).
@@ -32,7 +47,7 @@ promptStyle = Style.from_dict({
     "indicator": config.terminalPromptIndicatorColor2,
 })
 
-def read(bible: str = "NET"):
+def read(bible:str="NET") -> None:
     HealthCheck.print2("Search Bible AI")
     HealthCheck.print3("Developed by: Eliran Wong")
     HealthCheck.print3("Open source: https://github.com/eliranwong/searchbibleai")
@@ -46,7 +61,7 @@ def read(bible: str = "NET"):
 
     parser = BibleVerseParser(config.parserStandarisation)
     while True:
-        userInput = HealthCheck.simplePrompt(style=promptStyle, promptSession=read_session)
+        userInput = HealthCheck.simplePrompt(style=promptStyle, promptSession=read_session, completer=read_completer)
         if userInput == config.exit_entry:
             HealthCheck.print2("Closing ...")
             break
@@ -85,7 +100,7 @@ def read(bible: str = "NET"):
             HealthCheck.print2(config.divider)
 
 # combined semantic searches, literal searches and regular expression searches
-def search(bible: str = "NET", paragraphs: bool = False) -> None:
+def search(bible:str="NET", paragraphs:bool=False) -> None:
 
     def getAndItems(query):
         splits = query.split("&&")
@@ -124,7 +139,10 @@ def search(bible: str = "NET", paragraphs: bool = False) -> None:
     HealthCheck.print2(f"SEARCH {'PARAGRAPHS' if paragraphs else 'VERSES'}")
     HealthCheck.print2(config.divider)
     # search in books
-    books = input("In books: ")
+    HealthCheck.print3("In books (use '||' for combo, '-' for range): e.g. Gen||Matt-John||Rev")
+    books = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_book_session, completer=book_completer)
+    if books.lower() == "all":
+        books = ""
     books = BibleBooks.getBookCombo(books)
     if books:
         if paragraphs:
@@ -134,7 +152,8 @@ def search(bible: str = "NET", paragraphs: bool = False) -> None:
     else:
         books = {}
     # search in chapters
-    chapters = input("In chapters: ")
+    HealthCheck.print3("In chapters (use '||' for combo, '-' for range): e.g. 2||4||6-8||10")
+    chapters = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_chapter_session)
     if chapters := chapters.strip():
         splits = chapters.split("||")
         if len(splits) == 1:
@@ -167,16 +186,19 @@ def search(bible: str = "NET", paragraphs: bool = False) -> None:
         chapters = {}
 
     # search for plain words
-    contains = input("Search for plain words: ")
+    HealthCheck.print3("Search for plain words ('||' denotes 'or'; '&amp;&amp;' denotes 'and'): e.g. Lord&amp;&amp;God||Jesus&amp;&amp;love")
+    contains = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_literal_session)
     if contains.strip():
         splits = contains.split("||")
         contains = {"$or": [getAndItems(i) for i in splits]} if len(splits) > 1 else getAndItems(contains)
     else:
         contains = ""
     # search for meaning
-    meaning = input("Search for meaning: ")
+    HealthCheck.print3("Search for meaning:")
+    meaning = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_semantic_session)
     # search for regex
-    regex = input("Search for regular expression: ")
+    HealthCheck.print3("Search for regular expression:")
+    regex = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_regex_session)
 
     # formulate where filter
     if books and chapters:
