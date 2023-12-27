@@ -1,28 +1,39 @@
+import os, platform
+from searchbible import config
 from searchbible.health_check import HealthCheck
+
+# check package folder
+config.mainFile = os.path.realpath(__file__)
+config.packageFolder = os.path.dirname(config.mainFile)
+#package = os.path.basename(config.packageFolder)
+if os.getcwd() != config.packageFolder:
+    os.chdir(config.packageFolder)
+
+# check current platform
+config.thisPlatform = platform.system()
+config.divider = "--------------------"
+
+# set up configs
+from searchbible.utils.configDefault import *
+HealthCheck.check()
+
 from searchbible.utils.BibleBooks import BibleBooks
 from searchbible.utils.BibleVerseParser import BibleVerseParser
 from searchbible.utils.prompt_validator import NumberValidator
 from searchbible.db.Bible import Bible
-from searchbible import config
 from packaging import version
 from chromadb.config import Settings
-import os, chromadb, re, argparse
+import chromadb, re, argparse
 from prompt_toolkit.styles import Style
 from prompt_toolkit import PromptSession
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.completion import WordCompleter
 from pathlib import Path
 
-# set up basic configs
-if not hasattr(config, "openaiApiKey"):
-    HealthCheck.setBasicConfig()
 
-thisFile = os.path.realpath(__file__)
-config.packageFolder = os.path.dirname(thisFile)
 abbrev = BibleBooks.abbrev["eng"]
-config.divider = "--------------------"
 
-historyFolder = os.path.join(HealthCheck.getFiles(), "history")
+historyFolder = os.path.join(config.storagedirectory, "history")
 Path(historyFolder).mkdir(parents=True, exist_ok=True)
 read_history = os.path.join(historyFolder, "read")
 read_session = PromptSession(history=FileHistory(read_history))
@@ -142,9 +153,11 @@ def search(bible:str="NET", paragraphs:bool=False) -> None:
     HealthCheck.print2(f"SEARCH {'PARAGRAPHS' if paragraphs else 'VERSES'}")
     HealthCheck.print2(config.divider)
     # search in books
-    HealthCheck.print3("In books (use '||' for combo, '-' for range):")
+    HealthCheck.print2("In books (use '||' for combo, '-' for range):")
     print("e.g. Gen||Matt-John||Rev")
     books = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_book_session, completer=book_completer)
+    if books.lower() == config.exit_entry:
+        return
     if books.lower() == "all":
         books = ""
     books = BibleBooks.getBookCombo(books)
@@ -156,9 +169,11 @@ def search(bible:str="NET", paragraphs:bool=False) -> None:
     else:
         books = {}
     # search in chapters
-    HealthCheck.print3("In chapters (use '||' for combo, '-' for range):")
+    HealthCheck.print2("In chapters (use '||' for combo, '-' for range):")
     print("e.g. 2||4||6-8||10")
     chapters = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_chapter_session, validator=NumberValidator())
+    if chapters.lower() == config.exit_entry:
+        return
     if chapters := chapters.strip():
         splits = chapters.split("||")
         if len(splits) == 1:
@@ -191,27 +206,35 @@ def search(bible:str="NET", paragraphs:bool=False) -> None:
         chapters = {}
 
     # search for plain words
-    HealthCheck.print3("Search for plain words ('||' denotes 'or'; '&amp;&amp;' denotes 'and'):")
+    HealthCheck.print2("Search for plain words ('||' denotes 'or'; '&amp;&amp;' denotes 'and'):")
     print("e.g. Lord&amp;&amp;God||Jesus&amp;&amp;love")
     contains = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_literal_session)
+    if contains.lower() == config.exit_entry:
+        return
     if contains.strip():
         splits = contains.split("||")
         contains = {"$or": [getAndItems(i) for i in splits]} if len(splits) > 1 else getAndItems(contains)
     else:
         contains = ""
     # search for meaning
-    HealthCheck.print3("Search for meaning:")
+    HealthCheck.print2("Search for meaning:")
     meaning = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_semantic_session)
+    if meaning.lower() == config.exit_entry:
+        return
     if meaning:
-        HealthCheck.print3("Maximum number of closest matches:")
+        HealthCheck.print2("Maximum number of closest matches:")
         # specify number of closest matches
         default_n_results = 10
         n_results = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_closest_match_session, validator=NumberValidator())
+        if n_results.lower() == config.exit_entry:
+            return
         if not n_results or n_results <= 0:
             n_results = default_n_results
     # search for regex
-    HealthCheck.print3("Search for regular expression:")
+    HealthCheck.print2("Search for regular expression:")
     regex = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_regex_session)
+    if regex.lower() == config.exit_entry:
+        return
 
     # formulate where filter
     if books and chapters:

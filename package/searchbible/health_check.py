@@ -1,4 +1,4 @@
-import os, traceback, json, pprint, wcwidth, textwrap, threading, time, subprocess
+import os, traceback, json, pprint, wcwidth, textwrap, threading, time, subprocess, sys, re, pkg_resources, requests
 import openai
 from openai import OpenAI
 from pygments.styles import get_style_by_name
@@ -9,21 +9,20 @@ from prompt_toolkit.filters import Condition
 from prompt_toolkit.key_binding import KeyBindings, merge_key_bindings
 from prompt_toolkit.clipboard.pyperclip import PyperclipClipboard
 from searchbible.utils.prompt_shared_key_bindings import prompt_shared_key_bindings
-
-thisFile = os.path.realpath(__file__)
-packageFolder = os.path.dirname(thisFile)
-package = os.path.basename(packageFolder)
-if os.getcwd() != packageFolder:
-    os.chdir(packageFolder)
-configFile = os.path.join(packageFolder, "config.py")
-if not os.path.isfile(configFile):
-    open(configFile, "a", encoding="utf-8").close()
 from searchbible import config
 from pathlib import Path
+from packaging import version
 
 class HealthCheck:
 
     models = ("gpt-3.5-turbo", "gpt-3.5-turbo-16k", "gpt-4-1106-preview", "gpt-4", "gpt-4-32k")
+
+    @staticmethod
+    def check():
+        if not hasattr(config, "openaiApiKey"):
+            HealthCheck.setBasicConfig()
+        HealthCheck.updateApp()
+        HealthCheck.setSharedItems()
 
     @staticmethod
     def setBasicConfig(): # minimum config to work with standalone scripts built with AutoGen
@@ -57,7 +56,201 @@ class HealthCheck:
         config.parseBooklessReferences = True
         config.parseClearSpecialCharacters = False
         config.parserStandarisation = "NO"
-        HealthCheck.setPrint()
+
+    # automatic update
+    config.pipIsUpdated = False
+    def updateApp():
+        package = "searchbible"
+        thisPackage = f"{package}_android" if config.isTermux else package
+        print(f"Checking '{thisPackage}' version ...")
+        installed_version = HealthCheck.getPackageInstalledVersion(thisPackage)
+        if installed_version is None:
+            print("Installed version information is not accessible!")
+        else:
+            print(f"Installed version: {installed_version}")
+        latest_version = HealthCheck.getPackageLatestVersion(thisPackage)
+        if latest_version is None:
+            print("Latest version information is not accessible at the moment!")
+        elif installed_version is not None:
+            print(f"Latest version: {latest_version}")
+            if latest_version > installed_version:
+                if config.thisPlatform == "Windows":
+                    print("Automatic upgrade feature is yet to be supported on Windows!")
+                    print(f"Run 'pip install --upgrade {thisPackage}' to manually upgrade this app!")
+                else:
+                    try:
+                        # delete old shortcut files
+                        appName = config.letMeDoItName.split()[0]
+                        shortcutFiles = (f"{appName}.bat", f"{appName}.command", f"{appName}.desktop")
+                        for shortcutFile in shortcutFiles:
+                            shortcut = os.path.join(config.letMeDoItAIFolder, shortcutFile)
+                            if os.path.isfile(shortcut):
+                                os.remove(shortcut)
+                        # upgrade package
+                        HealthCheck.installmodule(f"--upgrade {thisPackage}")
+                        HealthCheck.restartApp()
+                    except:
+                        print(f"Failed to upgrade '{thisPackage}'!")
+
+    @staticmethod
+    def getPackageInstalledVersion(package):
+        try:
+            installed_version = pkg_resources.get_distribution(package).version
+            return version.parse(installed_version)
+        except pkg_resources.DistributionNotFound:
+            return None
+
+    @staticmethod
+    def getPackageLatestVersion(package):
+        try:
+            response = requests.get(f"https://pypi.org/pypi/{package}/json", timeout=10)
+            latest_version = response.json()['info']['version']
+            return version.parse(latest_version)
+        except:
+            return None
+
+    @staticmethod
+    def installmodule(module, update=True):
+        #executablePath = os.path.dirname(sys.executable)
+        #pippath = os.path.join(executablePath, "pip")
+        #pip = pippath if os.path.isfile(pippath) else "pip"
+        #pip3path = os.path.join(executablePath, "pip3")
+        #pip3 = pip3path if os.path.isfile(pip3path) else "pip3"
+
+        isInstalled, _ = subprocess.Popen("pip -V", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+        pipInstallCommand = f"{sys.executable} -m pip install"
+
+        if isInstalled:
+
+            if update:
+                if not config.pipIsUpdated:
+                    pipFailedUpdated = "pip tool failed to be updated!"
+                    try:
+                        # Update pip tool in case it is too old
+                        updatePip = subprocess.Popen(f"{pipInstallCommand} --upgrade pip", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                        *_, stderr = updatePip.communicate()
+                        if not stderr:
+                            print("pip tool updated!")
+                        else:
+                            print(pipFailedUpdated)
+                    except:
+                        print(pipFailedUpdated)
+                    config.pipIsUpdated = True
+            try:
+                upgrade = (module.startswith("-U ") or module.startswith("--upgrade "))
+                if upgrade:
+                    moduleName = re.sub("^[^ ]+? (.+?)$", r"\1", module)
+                else:
+                    moduleName = module
+                print(f"{'Upgrading' if upgrade else 'Installing'} '{moduleName}' ...")
+                installNewModule = subprocess.Popen(f"{pipInstallCommand} {module}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                *_, stderr = installNewModule.communicate()
+                if not stderr:
+                    print(f"Package '{moduleName}' {'upgraded' if upgrade else 'installed'}!")
+                else:
+                    print(f"Failed {'upgrading' if upgrade else 'installing'} package '{moduleName}'!")
+                    if config.developer:
+                        print(stderr)
+                return True
+            except:
+                return False
+
+        else:
+
+            print("pip command is not found!")
+            return False
+
+    @staticmethod
+    def setSharedItems():
+        # share in config to avoid circular imports
+        config.storagedirectory = HealthCheck.getFiles()
+        if not hasattr(config, "print"):
+            config.print = HealthCheck.print
+        if not hasattr(config, "print2"):
+            config.print2 = HealthCheck.print2
+        if not hasattr(config, "print3"):
+            config.print3 = HealthCheck.print3
+        if not hasattr(config, "print4"):
+            config.print4 = HealthCheck.print4
+        if not hasattr(config, "restartApp"):
+            config.restartApp = HealthCheck.restartApp
+        if not hasattr(config, "isPackageInstalled"):
+            config.isPackageInstalled = HealthCheck.isPackageInstalled
+        if not hasattr(config, "saveConfig"):
+            config.saveConfig = HealthCheck.saveConfig
+
+    @staticmethod
+    def set_log_file_max_lines(log_file, max_lines):
+        if os.path.isfile(log_file):
+            # Read the contents of the log file
+            with open(log_file, "r", encoding="utf-8") as fileObj:
+                lines = fileObj.readlines()
+            # Count the number of lines in the file
+            num_lines = len(lines)
+            if num_lines > max_lines:
+                # Calculate the number of lines to be deleted
+                num_lines_to_delete = num_lines - max_lines
+                if num_lines_to_delete > 0:
+                    # Open the log file in write mode and truncate it
+                    with open(log_file, "w", encoding="utf-8") as fileObj:
+                        # Write the remaining lines back to the log file
+                        fileObj.writelines(lines[num_lines_to_delete:])
+                filename = os.path.basename(log_file)
+                print(f"{num_lines_to_delete} old lines deleted from log file '{filename}'.")
+
+    @staticmethod
+    def saveConfig():
+        with open(os.path.join(config.packageFolder, "config.py"), "w", encoding="utf-8") as fileObj:
+            for name in dir(config):
+                excludeConfigList = [
+                    "mainFile",
+                    "packageFolder",
+                    "thisPlatform",
+                    "divider",
+                    "pipIsUpdated",
+                ]
+                excludeConfigList = excludeConfigList + config.excludeConfigList
+                if not name.startswith("__") and not name in excludeConfigList:
+                    try:
+                        value = eval(f"config.{name}")
+                        if not callable(value):
+                            fileObj.write("{0} = {1}\n".format(name, pprint.pformat(value)))
+                    except:
+                        pass
+
+    @staticmethod
+    def restartApp():
+        HealthCheck.print2(f"Restarting Search Bible AI ...")
+        os.system(f"{sys.executable} {config.mainFile}")
+        exit(0)
+
+    @staticmethod
+    def isPackageInstalled(package):
+        whichCommand = "where.exe" if config.thisPlatform == "Windows" else "which"
+        try:
+            isInstalled, *_ = subprocess.Popen("{0} {1}".format(whichCommand, package), shell=True, stdout=subprocess.PIPE).communicate()
+            return True if isInstalled else False
+        except:
+            return False
+
+    @staticmethod
+    def getFiles():
+        # option 1: config.storagedirectory; user custom folder
+        if not hasattr(config, "storagedirectory") or (config.storagedirectory and not os.path.isdir(config.storagedirectory)):
+            config.storagedirectory = ""
+        if config.storagedirectory:
+            return config.storagedirectory
+        # option 2: defaultStorageDir; located in user home directory
+        defaultStorageDir = os.path.join(os.path.expanduser('~'), "searchbible")
+        try:
+            Path(defaultStorageDir).mkdir(parents=True, exist_ok=True)
+        except:
+            pass
+        if os.path.isdir(defaultStorageDir):
+            return defaultStorageDir
+        # option 3: directory "files" in app directory; to be deleted on every upgrade
+        else:
+            return os.path.join(config.packageFolder, "files")
 
     @staticmethod
     def getCliOutput(cli):
@@ -154,50 +347,6 @@ class HealthCheck:
     def getPygmentsStyle():
         theme = config.pygments_style if hasattr(config, "pygments_style") and config.pygments_style else "stata-dark" if not config.terminalResourceLinkColor.startswith("ansibright") else "stata-light"
         return style_from_pygments_cls(get_style_by_name(theme))
-
-    @staticmethod
-    def getFiles():
-        apps = {
-            "myhand": ("MyHand", "MyHand Bot"),
-            "letmedoit": ("LetMeDoIt", "LetMeDoIt AI"),
-            "taskwiz": ("TaskWiz", "TaskWiz AI"),
-            "cybertask": ("CyberTask", "CyberTask AI"),
-            "googleaistudio": ("GoogleAIStudio", "GoogleAIStudio"),
-            "searchbible": ("SearchBible", "SearchBibleAI"),
-        }
-
-        # config.letMeDoItName
-        package = os.path.basename(packageFolder)
-        if not hasattr(config, "letMeDoItName") or not config.letMeDoItName:
-            config.letMeDoItName = apps[package][-1] if package in apps else "LetMeDoIt AI"
-
-        # option 1: config.storagedirectory; user custom folder
-        if not hasattr(config, "storagedirectory") or (config.storagedirectory and not os.path.isdir(config.storagedirectory)):
-            config.storagedirectory = ""
-        if config.storagedirectory:
-            return config.storagedirectory
-        # option 2: defaultStorageDir; located in user home directory
-        defaultStorageDir = os.path.join(os.path.expanduser('~'), config.letMeDoItName.split()[0].lower())
-        try:
-            Path(defaultStorageDir).mkdir(parents=True, exist_ok=True)
-        except:
-            pass
-        if os.path.isdir(defaultStorageDir):
-            return defaultStorageDir
-        # option 3: directory "files" in app directory; to be deleted on every upgrade
-        else:
-            return os.path.join(packageFolder, "files")
-
-    @staticmethod
-    def setPrint():
-        if not hasattr(config, "print"):
-            config.print = HealthCheck.print
-        if not hasattr(config, "print2"):
-            config.print2 = HealthCheck.print2
-        if not hasattr(config, "print3"):
-            config.print3 = HealthCheck.print3
-        if not hasattr(config, "print4"):
-            config.print4 = HealthCheck.print4
 
     @staticmethod
     def print(content):

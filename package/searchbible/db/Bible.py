@@ -12,7 +12,7 @@ class Bible:
     @staticmethod
     def getDbPath(bible: str) -> str:
         #dbpath
-        dbpath = os.path.join(HealthCheck.getFiles(), "bibles", bible)
+        dbpath = os.path.join(config.storagedirectory, "bibles", bible)
         if os.path.isdir(dbpath):
             return dbpath
         elif bible in ("KJV", "NET"):

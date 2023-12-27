@@ -1,5 +1,6 @@
 import apsw, uuid, os, chromadb, shutil
 from chromadb.config import Settings
+from searchbible import config
 from searchbible.utils.AGBsubheadings import agbSubheadings
 from searchbible.utils.AGBparagraphs_expanded import agbParagraphs
 from searchbible.health_check import HealthCheck
@@ -31,7 +32,7 @@ class ConvertBible:
             return ()
 
         # database path
-        dbpath = os.path.join(HealthCheck.getFiles(), "bibles", version)
+        dbpath = os.path.join(config.storagedirectory, "bibles", version)
         if os.path.isdir(dbpath):
             # remove old database if it exists
             HealthCheck.print3(f"Removing old database: {dbpath}")
