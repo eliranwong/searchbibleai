@@ -15,6 +15,7 @@ def setConfig(defaultSettings, thisTranslation={}, temporary=False):
                 config.thisTranslation[i] = thisTranslation[i]
 
 defaultSettings = (
+    ('thisTranslation', {}),
     ('cancel_entry', '.cancel'),
     ('exit_entry', '.exit'),
     ('terminalHeadingTextColor', 'ansigreen'),
@@ -41,21 +42,21 @@ defaultSettings = (
     ('predefinedContext', '[none]'),
     ('customPredefinedContext', ''),
     ('applyPredefinedContextAlways', False), # True: apply predefined context with all use inputs; False: apply predefined context only in the beginning of the conversation
-    ('thisTranslation', {}),
     ('pygments_style', ''),
     ('developer', False),
-    ('autoUpdate', True),
  
+    ("mainText", "NET"),
+    ("mainB", 43),
+    ("mainC", 3),
+    ("mainV", 16),
+    ("enableCaseSensitiveSearch", False),
+    ("noWordWrapBibles", []), # some bibles display better, without word wrap feature, e.g. CUV
+
+    ('terminalEnableTermuxAPI', False),
     ('terminalEditorScrollLineCount', 20),
     ('terminalEditorTabText', "    "),
     ('blankEntryAction', "..."),
-    ('defaultBlankEntryAction', ".context"),
     ('storagedirectory', ""),
-    ('suggestSystemCommand', True),
-    ('displayImprovedWriting', False),
-    ('improvedWritingSytle', 'standard English'), # e.g. British spoken English
-    ('ttsInput', False),
-    ('ttsOutput', False),
     ('vlcSpeed', 1.0),
     ('gcttsLang', "en-GB"),
     ('gcttsSpeed', 1.0),
@@ -65,22 +66,37 @@ defaultSettings = (
     ('ttsCommandSuffix', ""), # try on Windows; ttsComand = '''Add-Type -TypeDefinition 'using System.Speech.Synthesis; class TTS { static void Main(string[] args) { using (SpeechSynthesizer synth = new SpeechSynthesizer()) { synth.Speak(args[0]); } } }'; [TTS]::Main('''; ttsCommandSuffix = ")"; a full example is Add-Type -TypeDefinition 'using System.Speech.Synthesis; class TTS { static void Main(string[] args) { using (SpeechSynthesizer synth = new SpeechSynthesizer()) { synth.Speak(args[0]); } } }'; [TTS]::Main("Text to be read")
     ("ttsLanguages", ["en", "en-gb", "en-us", "zh", "yue", "el"]), # users can edit this item in config.py to support more or less languages
     ("ttsLanguagesCommandMap", {"en": "", "en-gb": "", "en-us": "", "zh": "", "yue": "", "el": "",}), # advanced users need to edit this item manually to support different voices with customised tts command, e.g. ttsCommand set to "say -r 200 -v Daniel" and ttsLanguagesCommandMap set to {"en": "Daniel", "en-gb": "Daniel", "en-us": "", "zh": "", "yue": "", "el": "",}
+
+    ('noOfLinesPerChunkForParsing', 100),
+    ('parseEnglishBooksOnly', False),
+    ('useLiteVerseParsing', False),
+    ('standardAbbreviation', "ENG"),
+    ('convertChapterVerseDotSeparator', True),
+    ('parseBookChapterWithoutSpace', True),
+    ('parseBooklessReferences', True),
+    ('parseClearSpecialCharacters', False),
+    ('parserStandarisation', "NO"),
+
 )
 
-storageDir = config.getStorageDir()
-if os.path.isdir(storageDir):
-    configFile = os.path.join(config.letMeDoItAIFolder, "config.py")
-    if os.path.getsize(configFile) == 0:
-        backupFile = os.path.join(storageDir, "config_backup.py")
-        if os.path.isfile(backupFile):
-            restore_backup = yes_no_dialog(
-                title="Configuration Backup Found",
-                text=f"Do you want to use the following backup?\n{backupFile}"
-            ).run()
-            if restore_backup:
-                shutil.copy(backupFile, configFile)
-                print("Configuration backup restored!")
-                config.restartApp()
+# save default configs
+configFile = os.path.join(config.packageFolder, "config.py")
+backupFile = os.path.join(config.storagedirectory, "config_backup.py")
+if os.path.getsize(configFile) == 0:
+    if os.path.isfile(backupFile):
+        restore_backup = yes_no_dialog(
+            title="Configuration Backup Found",
+            text=f"Do you want to use the following backup?\n{backupFile}"
+        ).run()
+        if restore_backup:
+            shutil.copy(backupFile, configFile)
+            print("Configuration backup restored!")
+            config.restartApp()
+# load default config
 setConfig(defaultSettings)
-# allow plugins to add customised config
+# share setConfig, to allow plugins to add customised config
 config.setConfig = setConfig
+# back up newly saved config
+if os.path.getsize(configFile) == 0:
+    config.saveConfig()
+    shutil.copy(configFile, backupFile)

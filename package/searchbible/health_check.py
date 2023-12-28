@@ -10,6 +10,7 @@ from prompt_toolkit.key_binding import KeyBindings, merge_key_bindings
 from prompt_toolkit.clipboard.pyperclip import PyperclipClipboard
 from searchbible.utils.prompt_shared_key_bindings import prompt_shared_key_bindings
 from searchbible import config
+from searchbible.utils.shortcuts import createShortcuts
 from pathlib import Path
 from packaging import version
 
@@ -19,10 +20,14 @@ class HealthCheck:
 
     @staticmethod
     def check():
+        HealthCheck.checkPythonVersion()
+        if config.autoUpgrade:
+            HealthCheck.updateApp()
         if not hasattr(config, "openaiApiKey"):
             HealthCheck.setBasicConfig()
-        HealthCheck.updateApp()
-        HealthCheck.setSharedItems()
+        HealthCheck.setOsOpenCmd()
+        #HealthCheck.checkPygame()
+        createShortcuts()
 
     @staticmethod
     def setBasicConfig(): # minimum config to work with standalone scripts built with AutoGen
@@ -56,6 +61,32 @@ class HealthCheck:
         config.parseBooklessReferences = True
         config.parseClearSpecialCharacters = False
         config.parserStandarisation = "NO"
+
+    @staticmethod
+    def setOsOpenCmd():
+        if config.terminalEnableTermuxAPI:
+            config.open = "termux-share"
+        elif config.thisPlatform == "Linux":
+            config.open = "xdg-open"
+        elif config.thisPlatform == "Darwin":
+            config.open = "open"
+        elif config.thisPlatform == "Windows":
+            config.open = "start"
+        # name macOS
+        if config.thisPlatform == "Darwin":
+            config.thisPlatform = "macOS"
+
+    @staticmethod
+    def checkPygame():
+        # try import pygame
+        try:
+            # hide pygame welcome message
+            os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "1"
+            import pygame
+            pygame.mixer.init()
+            config.isPygameInstalled = True
+        except:
+            config.isPygameInstalled = False
 
     # automatic update
     config.pipIsUpdated = False
@@ -161,9 +192,22 @@ class HealthCheck:
             return False
 
     @staticmethod
+    def checkPythonVersion():
+        # requires python 3.8+; required by package 'tiktoken'
+        pythonVersion = sys.version_info
+        if pythonVersion < (3, 8):
+            print("Python version higher than 3.8 is required!")
+            print("Closing ...")
+            exit(1)
+        elif pythonVersion >= (3, 12):
+            print("Some features may not work with python version newer than 3.11!")
+
+    @staticmethod
     def setSharedItems():
-        # share in config to avoid circular imports
         config.storagedirectory = HealthCheck.getFiles()
+        config.excludeConfigList = []
+        config.divider = "--------------------"
+        # share frequently used methods in config to avoid circular imports
         if not hasattr(config, "print"):
             config.print = HealthCheck.print
         if not hasattr(config, "print2"):
@@ -196,7 +240,7 @@ class HealthCheck:
                         # Write the remaining lines back to the log file
                         fileObj.writelines(lines[num_lines_to_delete:])
                 filename = os.path.basename(log_file)
-                print(f"{num_lines_to_delete} old lines deleted from log file '{filename}'.")
+                HealthCheck.print3(f"Number of old lines deleted from log file '{filename}': {num_lines_to_delete}")
 
     @staticmethod
     def saveConfig():
@@ -208,6 +252,8 @@ class HealthCheck:
                     "thisPlatform",
                     "divider",
                     "pipIsUpdated",
+                    "isPygameInstalled",
+                    "clipboard",
                 ]
                 excludeConfigList = excludeConfigList + config.excludeConfigList
                 if not name.startswith("__") and not name in excludeConfigList:
@@ -432,18 +478,3 @@ class HealthCheck:
         #    print("Solution: Retry your request after a brief wait and contact us if the issue persists. Check the [status page](https://status.openai.com).")
         except:
             print(traceback.format_exc())
-
-    @staticmethod
-    def saveConfig():
-        #print(configFile)
-        with open(configFile, "w", encoding="utf-8") as fileObj:
-            #print(dir(config))
-            for name in dir(config):
-                excludeConfigList = []
-                if not name.startswith("__") and not name in excludeConfigList:
-                    try:
-                        value = eval(f"config.{name}")
-                        if not callable(value):
-                            fileObj.write("{0} = {1}\n".format(name, pprint.pformat(value)))
-                    except:
-                        pass

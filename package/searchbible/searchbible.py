@@ -1,36 +1,50 @@
 import os, platform
+
+mainFile = os.path.realpath(__file__)
+packageFolder = os.path.dirname(mainFile)
+
+# create config.py if it does not exist; in case user delete the file for some reasons
+configFile = os.path.join(packageFolder, "config.py")
+if not os.path.isfile(configFile):
+    open(configFile, "a", encoding="utf-8").close()
+
 from searchbible import config
 from searchbible.health_check import HealthCheck
 
-# check package folder
-config.mainFile = os.path.realpath(__file__)
-config.packageFolder = os.path.dirname(config.mainFile)
+# share mainFile and packageFolder paths in config
+config.mainFile = mainFile
+config.packageFolder = packageFolder
 #package = os.path.basename(config.packageFolder)
 if os.getcwd() != config.packageFolder:
     os.chdir(config.packageFolder)
 
 # check current platform
 config.thisPlatform = platform.system()
-config.divider = "--------------------"
-
+# check if it is running with Android Termux
+config.isTermux = True if os.path.isdir("/data/data/com.termux/files/home") else False
+# check storage directory
+HealthCheck.setSharedItems()
 # set up configs
 from searchbible.utils.configDefault import *
 HealthCheck.check()
 
+# Start of main application
+import chromadb, re, argparse, shutil
 from searchbible.utils.BibleBooks import BibleBooks
 from searchbible.utils.BibleVerseParser import BibleVerseParser
 from searchbible.utils.prompt_validator import NumberValidator
 from searchbible.db.Bible import Bible
 from packaging import version
 from chromadb.config import Settings
-import chromadb, re, argparse
 from prompt_toolkit.styles import Style
 from prompt_toolkit import PromptSession
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.completion import WordCompleter
+from prompt_toolkit.shortcuts import set_title, clear_title
 from pathlib import Path
 
 
+appName = "Search Bible AI"
 abbrev = BibleBooks.abbrev["eng"]
 
 historyFolder = os.path.join(config.storagedirectory, "history")
@@ -77,7 +91,6 @@ def read(bible:str="NET") -> None:
     while True:
         userInput = HealthCheck.simplePrompt(style=promptStyle, promptSession=read_session, completer=read_completer)
         if userInput == config.exit_entry:
-            HealthCheck.print2("Closing ...")
             break
         elif userInput == ".verses":
             # ctrl+f to search verses
@@ -303,11 +316,28 @@ def main():
     if not bible:
         bible = input("Enter a bible version (e.g. KJV, NET, etc.): ").strip()
 
+    # set terminal title
+    set_title("Search Bible AI")
+    # check log files; delete old lines if too many
+    for i in (
+        read_history,
+        search_book_history,
+        search_chapter_history,
+        search_literal_history,
+        search_semantic_history,
+        search_closest_match_history,
+        search_regex_history,
+    ):
+        HealthCheck.set_log_file_max_lines(i, 3000)
+    # start with reading mode
     read(bible=bible if bible else "NET")
-    # search verses
-    #search(bible=bible if bible else "NET")
-    # search paragraphs
-    #search(bible=bible if bible else "NET", paragraphs=True)
+    # back up config on closing
+    HealthCheck.print2("Saving configurations ...")
+    HealthCheck.saveConfig()
+    shutil.copy(configFile, os.path.join(config.storagedirectory, "config_backup.py"))
+    # clear terminal title
+    HealthCheck.print2("Closing ...")
+    clear_title()
 
 
 if __name__ == '__main__':

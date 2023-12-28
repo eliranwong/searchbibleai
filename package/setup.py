@@ -22,7 +22,7 @@ with open(os.path.join(package, "requirements.txt"), "r") as fileObj:
 # https://packaging.python.org/en/latest/guides/distributing-packages-using-setuptools/
 setup(
     name=package,
-    version="0.0.32",
+    version="0.0.46",
     python_requires=">=3.8",
     description="Search Bible AI - Integrate Unique Bible App resources with AI tools",
     long_description=long_description,
@@ -32,6 +32,7 @@ setup(
         package,
         f"{package}.db",
         f"{package}.utils",
+        f"{package}.icons",
         f"{package}.converter",
         f"{package}.data",
         f"{package}.data.bibles",
@@ -40,6 +41,7 @@ setup(
         package: ["*.*"],
         f"{package}.db": ["*.*"],
         f"{package}.utils": ["*.*"],
+        f"{package}.icons": ["*.*"],
         f"{package}.converter": ["*.*"],
         f"{package}.data": ["*.*"],
         f"{package}.data.bibles": ["*.*"],
