@@ -91,8 +91,8 @@ class HealthCheck:
     # automatic update
     config.pipIsUpdated = False
     def updateApp():
-        package = "searchbible"
-        thisPackage = f"{package}_android" if config.isTermux else package
+        thisPackage = "searchbible"
+        #thisPackage = f"{package}_android" if config.isTermux else thisPackage
         print(f"Checking '{thisPackage}' version ...")
         installed_version = HealthCheck.getPackageInstalledVersion(thisPackage)
         if installed_version is None:
@@ -111,10 +111,10 @@ class HealthCheck:
                 else:
                     try:
                         # delete old shortcut files
-                        appName = config.letMeDoItName.split()[0]
+                        appName = "SearchBibleAI"
                         shortcutFiles = (f"{appName}.bat", f"{appName}.command", f"{appName}.desktop")
                         for shortcutFile in shortcutFiles:
-                            shortcut = os.path.join(config.letMeDoItAIFolder, shortcutFile)
+                            shortcut = os.path.join(config.packageFolder, shortcutFile)
                             if os.path.isfile(shortcut):
                                 os.remove(shortcut)
                         # upgrade package
@@ -254,6 +254,14 @@ class HealthCheck:
                     "pipIsUpdated",
                     "isPygameInstalled",
                     "clipboard",
+                    "multilineInput",
+                    "promptStyle1",
+                    "promptStyle2",
+                    "terminalColors",
+                    "addPathAt",
+                    "defaultEntry",
+                    "predefinedContextTemp",
+                    "pagerContent",
                 ]
                 excludeConfigList = excludeConfigList + config.excludeConfigList
                 if not name.startswith("__") and not name in excludeConfigList:

@@ -33,6 +33,7 @@ import chromadb, re, argparse, shutil
 from searchbible.utils.BibleBooks import BibleBooks
 from searchbible.utils.BibleVerseParser import BibleVerseParser
 from searchbible.utils.prompt_validator import NumberValidator
+from searchbible.utils.prompts import Prompts
 from searchbible.db.Bible import Bible
 from packaging import version
 from chromadb.config import Settings
@@ -41,6 +42,7 @@ from prompt_toolkit import PromptSession
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.shortcuts import set_title, clear_title
+from prompt_toolkit.key_binding import KeyBindings
 from pathlib import Path
 
 
@@ -75,59 +77,100 @@ promptStyle = Style.from_dict({
     "indicator": config.terminalPromptIndicatorColor2,
 })
 
-def read(bible:str="NET") -> None:
+def read(default="") -> None:
     HealthCheck.print2("Search Bible AI")
     HealthCheck.print3("Developed by: Eliran Wong")
     HealthCheck.print3("Open source: https://github.com/eliranwong/searchbible")
     HealthCheck.print2(config.divider)
     HealthCheck.print("* enter a single reference to display a full chapter")
     HealthCheck.print("* enter multiple references to display verses")
-    HealthCheck.print("* enter '.verses' or press 'Ctrl+F' to search verses")
-    HealthCheck.print("* enter '.paragraphs' or press 'Ctrl+P' to search paragraphs")
+    HealthCheck.print("* enter a bible version abbreviation, e.g. KJV, to switch version")
+    HealthCheck.print("* enter a search query to perform a simple search")
+    HealthCheck.print("* enter '.verses' or press 'Ctrl+F' to perform a detailed search for verses")
+    HealthCheck.print("* enter '.paragraphs' or press 'Esc+F' to perform a detailed search for paragraphs")
     HealthCheck.print(f"* enter '{config.exit_entry}' or press 'Ctrl+Q' to exit current feature of quit this app")
     HealthCheck.print2(config.divider)
 
+    if not default and os.path.isfile(read_history) and not os.path.getsize(read_history) == 0:
+        with open(read_history, "r", encoding="utf-8") as fileObj:
+            last_line = fileObj.readlines()[-1].strip()
+        if last_line.startswith("+"):
+            default = last_line[1:]
+
     parser = BibleVerseParser(config.parserStandarisation)
+
+    this_key_bindings = KeyBindings()
+    @this_key_bindings.add("c-f")
+    def _(event):
+        buffer = event.app.current_buffer
+        buffer.text = ".verses"
+        buffer.validate_and_handle()
+    @this_key_bindings.add("escape", "f")
+    def _(event):
+        buffer = event.app.current_buffer
+        buffer.text = ".paragraphs"
+        buffer.validate_and_handle()
+
+    prompts = Prompts(custom_key_bindings=this_key_bindings)
+
     while True:
-        userInput = HealthCheck.simplePrompt(style=promptStyle, promptSession=read_session, completer=read_completer)
+        userInput = prompts.simplePrompt(style=config.promptStyle1, promptSession=read_session, completer=read_completer, default=default, accept_default=True if default else False)
+        default = ""
         if userInput == config.exit_entry:
             break
         elif userInput == ".verses":
             # ctrl+f to search verses
-            search(bible=bible, paragraphs=False)
+            search(bible=config.mainText, paragraphs=False)
         elif userInput == ".paragraphs":
             # ctrl+p to search paragraphs
-            search(bible=bible, paragraphs=True)
+            search(bible=config.mainText, paragraphs=True)
         elif userInput:
-            refs = parser.extractAllReferences(userInput)
-            if not refs:
-                HealthCheck.print2("No reference is found!")
-                return None
-
-            isChapter = (len(refs) == 1 and len(refs[0]) == 3)
             HealthCheck.print2(config.divider)
-            if isChapter:
-                # check if it is a single reference; display a full chapter
-                fullChapter, verses = Bible.getVerses(refs, bible)
-                chapterTitle = False
-                for _, book, chapter, verse, scripture in fullChapter:
-                    if not chapterTitle:
-                        book_abbr = abbrev[str(book)][0]
-                        HealthCheck.print2(f"# {book_abbr} {chapter}")
-                        chapterTitle = True
-                    HealthCheck.print4(f"({verse}) {scripture.strip()}")
-                # draw a whole chapter
-                HealthCheck.print2(config.divider)
+
+            # transform aliases
+            bookName = abbrev[str(config.mainB)][0]
+            if userInput in Bible.getBibleList() + Bible.getUbaBibleList():
+                # change bible version
+                config.mainText = userInput
+                userInput = f"{bookName} {config.mainC}:{config.mainV}"
+            elif userInput == ":":
+                # loaded previous selected verse
+                userInput = f"{bookName} {config.mainC}:{config.mainV}"
+            elif re.search("^[0-9]+?:$", userInput):
+                # change chapter
+                userInput = f"{bookName} {userInput[:-1]}:1"
+            elif re.search("^:[0-9]+?$", userInput):
+                # change verse
+                userInput = f"{bookName} {config.mainC}:{userInput[1:]}"
+
+            if refs := parser.extractAllReferences(userInput):
+                # verse reference(s) provided
+                isChapter = (len(refs) == 1 and len(refs[0]) == 3)
+                if isChapter:
+                    # check if it is a single reference; display a full chapter
+                    fullChapter, verses = Bible.getVerses(refs, config.mainText)
+                    chapterTitle = False
+                    for _, book, chapter, verse, scripture in fullChapter:
+                        if not chapterTitle:
+                            book_abbr = abbrev[str(book)][0]
+                            HealthCheck.print2(f"# {book_abbr} {chapter}")
+                            chapterTitle = True
+                        HealthCheck.print4(f"({verse}) {scripture.strip()}")
+                    # draw a whole chapter
+                    HealthCheck.print2(config.divider)
+                else:
+                    verses = Bible.getVerses(refs, config.mainText)
+                # display all verses
+                for _, book, chapter, verse, scripture in verses:
+                    book_abbr = abbrev[str(book)][0]
+                    HealthCheck.print4(f"({book_abbr} {chapter}:{verse}) {scripture.strip()}")
             else:
-                verses = Bible.getVerses(refs, bible)
-            # display all verses
-            for _, book, chapter, verse, scripture in verses:
-                book_abbr = abbrev[str(book)][0]
-                HealthCheck.print4(f"({book_abbr} {chapter}:{verse}) {scripture.strip()}")
+                search(bible=config.mainText, paragraphs=False, simpleSearch=userInput)
+
             HealthCheck.print2(config.divider)
 
 # combined semantic searches, literal searches and regular expression searches
-def search(bible:str="NET", paragraphs:bool=False) -> None:
+def search(bible:str="NET", paragraphs:bool=False, simpleSearch="") -> None:
 
     def getAndItems(query):
         splits = query.split("&&")
@@ -162,102 +205,110 @@ def search(bible:str="NET", paragraphs:bool=False) -> None:
             pass
         return cc
 
-    # user input
-    HealthCheck.print2(f"SEARCH {'PARAGRAPHS' if paragraphs else 'VERSES'}")
-    HealthCheck.print2(config.divider)
-    # search in books
-    HealthCheck.print2("In books (use '||' for combo, '-' for range):")
-    print("e.g. Gen||Matt-John||Rev")
-    books = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_book_session, completer=book_completer)
-    if books.lower() == config.exit_entry:
-        return
-    if books.lower() == "all":
-        books = ""
-    books = BibleBooks.getBookCombo(books)
-    if books:
-        if paragraphs:
-            books = {"book_start": {"$in": books}}
-        else:
-            books = {"book": {"$in": books}}
+    if simpleSearch:
+        meaning = simpleSearch.replace("\n", " ")
+        n_results = config.maxClosestMatches
+        where = None
+        contains = None
     else:
-        books = {}
-    # search in chapters
-    HealthCheck.print2("In chapters (use '||' for combo, '-' for range):")
-    print("e.g. 2||4||6-8||10")
-    chapters = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_chapter_session, validator=NumberValidator())
-    if chapters.lower() == config.exit_entry:
-        return
-    if chapters := chapters.strip():
-        splits = chapters.split("||")
-        if len(splits) == 1:
-            if "-" in chapters:
-                cc = getChapterRange(chapters)
+        # user input
+        HealthCheck.print2(f"SEARCH {'PARAGRAPHS' if paragraphs else 'VERSES'}")
+        HealthCheck.print2(config.divider)
+        # search in books
+        HealthCheck.print2("In books (use '||' for combo, '-' for range):")
+        print("e.g. Gen||Matt-John||Rev")
+        books = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_book_session, completer=book_completer)
+        if books.lower() == config.exit_entry:
+            return
+        if books.lower() == "all":
+            books = ""
+        books = BibleBooks.getBookCombo(books)
+        if books:
+            if paragraphs:
+                books = {"book_start": {"$in": books}}
             else:
-                try:
-                    cc = [int(chapters)]
-                except:
-                    cc = []
+                books = {"book": {"$in": books}}
         else:
-            cc = []
-            for i in splits:
-                i = i.lower().strip()
-                if "-" in i:
-                    cc += getChapterRange(i)
+            books = {}
+        # search in chapters
+        HealthCheck.print2("In chapters (use '||' for combo, '-' for range):")
+        print("e.g. 2||4||6-8||10")
+        chapters = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_chapter_session, validator=NumberValidator())
+        if chapters.lower() == config.exit_entry:
+            return
+        if chapters.lower() == "all":
+            chapters = ""
+        if chapters := chapters.strip():
+            splits = chapters.split("||")
+            if len(splits) == 1:
+                if "-" in chapters:
+                    cc = getChapterRange(chapters)
                 else:
                     try:
-                        cc.append(int(i))
+                        cc = [int(chapters)]
                     except:
-                        pass
-    else:
-        cc = []
-    if cc:
-        if paragraphs:
-            chapters = {"$or": [{"$and": [{"chapter_start": {"$lte": c}}, {"chapter_end": {"$gte": c}}]} for c in cc]} if len(cc) > 1 else {"$and": [{"chapter_start": {"$lte": cc[0]}}, {"chapter_end": {"$gte": cc[0]}}]}
+                        cc = []
+            else:
+                cc = []
+                for i in splits:
+                    i = i.lower().strip()
+                    if "-" in i:
+                        cc += getChapterRange(i)
+                    else:
+                        try:
+                            cc.append(int(i))
+                        except:
+                            pass
         else:
-            chapters = {"chapter": {"$in": cc}}
-    else:
-        chapters = {}
+            cc = []
+        if cc:
+            if paragraphs:
+                chapters = {"$or": [{"$and": [{"chapter_start": {"$lte": c}}, {"chapter_end": {"$gte": c}}]} for c in cc]} if len(cc) > 1 else {"$and": [{"chapter_start": {"$lte": cc[0]}}, {"chapter_end": {"$gte": cc[0]}}]}
+            else:
+                chapters = {"chapter": {"$in": cc}}
+        else:
+            chapters = {}
 
-    # search for plain words
-    HealthCheck.print2("Search for plain words ('||' denotes 'or'; '&amp;&amp;' denotes 'and'):")
-    print("e.g. Lord&amp;&amp;God||Jesus&amp;&amp;love")
-    contains = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_literal_session)
-    if contains.lower() == config.exit_entry:
-        return
-    if contains.strip():
-        splits = contains.split("||")
-        contains = {"$or": [getAndItems(i) for i in splits]} if len(splits) > 1 else getAndItems(contains)
-    else:
-        contains = ""
-    # search for meaning
-    HealthCheck.print2("Search for meaning:")
-    meaning = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_semantic_session)
-    if meaning.lower() == config.exit_entry:
-        return
-    if meaning:
-        HealthCheck.print2("Maximum number of closest matches:")
-        # specify number of closest matches
-        default_n_results = 10
-        n_results = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_closest_match_session, validator=NumberValidator())
-        if n_results.lower() == config.exit_entry:
+        # search for plain words
+        HealthCheck.print2("Search for plain words ('||' denotes 'or'; '&amp;&amp;' denotes 'and'):")
+        print("e.g. Lord&amp;&amp;God||Jesus&amp;&amp;love")
+        contains = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_literal_session)
+        if contains.lower() == config.exit_entry:
             return
-        if not n_results or n_results <= 0:
-            n_results = default_n_results
-    # search for regex
-    HealthCheck.print2("Search for regular expression:")
-    regex = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_regex_session)
-    if regex.lower() == config.exit_entry:
-        return
+        if contains.strip():
+            splits = contains.split("||")
+            contains = {"$or": [getAndItems(i) for i in splits]} if len(splits) > 1 else getAndItems(contains)
+        else:
+            contains = ""
+        # search for meaning
+        HealthCheck.print2("Search for meaning:")
+        meaning = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_semantic_session)
+        if meaning.lower() == config.exit_entry:
+            return
+        if meaning:
+            HealthCheck.print2("Maximum number of closest matches:")
+            # specify number of closest matches
+            default_n_results = config.maxClosestMatches
+            n_results = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_closest_match_session, validator=NumberValidator(), default=default_n_results)
+            if n_results.lower() == config.exit_entry:
+                return
+            if not n_results or n_results <= 0:
+                config.maxClosestMatches = n_results = default_n_results
+        # search for regex
+        HealthCheck.print2("Search for regular expression:")
+        regex = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_regex_session)
+        if regex.lower() == config.exit_entry:
+            return
 
-    # formulate where filter
-    if books and chapters:
-        where = {"$and": [books, chapters]}
-    elif books:
-        where = books
-    elif chapters:
-        where = chapters
-    else:
-        where = None
+        # formulate where filter
+        if books and chapters:
+            where = {"$and": [books, chapters]}
+        elif books:
+            where = books
+        elif chapters:
+            where = chapters
+        else:
+            where = None
 
     if meaning:
         # run query
@@ -312,9 +363,7 @@ def main():
     # Parse arguments
     args = parser.parse_args()
     # Get options
-    bible = args.default.strip() if args.default and args.default.strip() else ""
-    if not bible:
-        bible = input("Enter a bible version (e.g. KJV, NET, etc.): ").strip()
+    default = args.default.strip() if args.default and args.default.strip() else ""
 
     # set terminal title
     set_title("Search Bible AI")
@@ -330,7 +379,7 @@ def main():
     ):
         HealthCheck.set_log_file_max_lines(i, 3000)
     # start with reading mode
-    read(bible=bible if bible else "NET")
+    read(default=default)
     # back up config on closing
     HealthCheck.print2("Saving configurations ...")
     HealthCheck.saveConfig()

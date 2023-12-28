@@ -77,6 +77,8 @@ defaultSettings = (
     ('parseClearSpecialCharacters', False),
     ('parserStandarisation', "NO"),
 
+    ('terminalEditorScrollLineCount', 20),
+    ('maxClosestMatches', 20),
 )
 
 # save default configs

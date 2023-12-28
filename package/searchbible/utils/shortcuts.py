@@ -6,6 +6,9 @@ import shutil
 appName = "SearchBibleAI"
 
 def createShortcuts():
+    binFolder = os.path.dirname(sys.executable)
+    searchbible_executable = os.path.join(binFolder, "searchbible")
+
     config.print2("Creating shortcuts ...")
 
     icoFile = os.path.join(config.packageFolder, "icons", "searchbibleai.ico")
@@ -24,7 +27,7 @@ def createShortcuts():
         desktopShortcut1 = os.path.join(os.path.expanduser('~'), 'Desktop', f"{appName}.bat")
         desktopShortcut2 = os.path.join(os.path.expanduser('~'), 'OneDrive', 'Desktop', f"{appName}.bat")
         sendToShortcut = os.path.join(os.path.expanduser('~'), os.environ["APPDATA"], 'Microsoft\Windows\SendTo', f"{appName}.bat")
-        shortcutCommand1 = f'''powershell.exe -NoExit -Command "{sys.executable} '{config.mainFile}' \"%1\""'''
+        shortcutCommand1 = f'''powershell.exe -NoExit -Command "'{searchbible_executable}' \"%1\""'''
         # Create .bat for application shortcuts
         if not os.path.exists(shortcutBat1):
             for i in (shortcutBat1, desktopShortcut1, desktopShortcut2, sendToShortcut):
@@ -46,7 +49,7 @@ def createShortcuts():
                 with open(shortcut_file, "w") as f:
                     f.write("#!/bin/bash\n")
                     f.write(f"cd {config.packageFolder}\n")
-                    f.write(f"{sys.executable} {config.mainFile}\n")
+                    f.write(f'"{searchbible_executable}"\n')
                 os.chmod(shortcut_file, 0o755)
                 print(f"Created: {shortcut_file}")
                 shutil.copy(shortcut_file, desktopPath) # overwrites older version
@@ -62,10 +65,10 @@ Version=1.0
 Type=Application
 Terminal=true
 Path={0}
-Exec={1} {2}
-Icon={3}
-Name={4}
-""".format(config.packageFolder, sys.executable, config.mainFile, pngFile, appName)
+Exec="{1}"
+Icon={2}
+Name={3}
+""".format(config.packageFolder, searchbible_executable, pngFile, appName)
 
         linuxDesktopFile = os.path.join(config.packageFolder, f"{appName}.desktop")
         if not os.path.exists(linuxDesktopFile):

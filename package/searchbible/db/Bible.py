@@ -10,18 +10,34 @@ from packaging import version
 class Bible:
 
     @staticmethod
+    def getBibleList() -> list:
+        bibles = os.path.join(config.storagedirectory, "bibles")
+        return [i for i in os.listdir(bibles) if os.path.isdir(os.path.join(bibles, i)) and os.path.isfile(os.path.join(bibles, i, "chroma.sqlite3"))]
+
+    @staticmethod
+    def getUbaBibleList() -> list:
+        return [i for i in os.listdir(os.path.join(config.packageFolder, "data", "bibles")) if os.path.isfile(os.path.join(config.packageFolder, "data", "bibles", i)) and i.endswith(".bible")]
+
+    @staticmethod
     def getDbPath(bible: str) -> str:
-        #dbpath
-        dbpath = os.path.join(config.storagedirectory, "bibles", bible)
-        if os.path.isdir(dbpath):
-            return dbpath
-        elif bible in ("KJV", "NET"):
+        def convertBible(bible: str):
             HealthCheck.print3(f"Converting bible: {bible} ...")
             ConvertBible.convert_bible(os.path.join(config.packageFolder, "data", "bibles", f"{bible}.bible"))
+        installedBibles = Bible.getBibleList()
+        dbpath = os.path.join(config.storagedirectory, "bibles", bible)
+        if bible in installedBibles:
+            config.mainText = bible
+            return dbpath
+        elif bible in Bible.getUbaBibleList():
+            convertBible(bible)
+            config.mainText = bible
             return dbpath
         else:
-            HealthCheck.print3(f"Bible version not found: {bible}")
-            return ""
+            bible = "NET"
+            if not bible in installedBibles:
+                convertBible(bible)
+            config.mainText = "NET"
+            return os.path.join(config.storagedirectory, "bibles", "NET")
 
     @staticmethod
     def getVerses(refs: list, bible: str = "NET") -> list:
@@ -52,8 +68,8 @@ class Bible:
 
         # check if it is a single reference; get also all verses in the chapter
         if isChapter:
-            b, c, _ = refs[0]
-            res0 = collection.get(where={"$and": [{"book": {"$eq": b}}, {"chapter": {"$eq": c}}]})
+            config.mainB, config.mainC, config.mainV = refs[0]
+            res0 = collection.get(where={"$and": [{"book": {"$eq": config.mainB}}, {"chapter": {"$eq": config.mainC}}]})
             metadatas = res0["metadatas"]
             documents = res0["documents"]
             chapter = [(metadata["reference"], metadata["book"], metadata["chapter"], metadata["verse"], document) for metadata, document in zip(metadatas, documents)]

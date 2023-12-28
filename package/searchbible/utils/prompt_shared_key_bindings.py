@@ -1,5 +1,5 @@
 from searchbible import config
-import pydoc, os, re, sys
+import pydoc, os, re, sys, subprocess
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.shortcuts import set_title
 
