@@ -9,7 +9,7 @@ def createShortcuts():
     config.print2("Creating shortcuts ...")
 
     icoFile = os.path.join(config.packageFolder, "icons", "searchbibleai.ico")
-    pngFile = os.path.join(config.packageFolder, "icons", "searchbibleai.ico")
+    pngFile = os.path.join(config.packageFolder, "icons", "searchbibleai.png")
 
     # Windows icon
     if config.thisPlatform == "Windows":

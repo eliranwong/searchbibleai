@@ -25,9 +25,9 @@ class HealthCheck:
             HealthCheck.updateApp()
         if not hasattr(config, "openaiApiKey"):
             HealthCheck.setBasicConfig()
+        createShortcuts()
         HealthCheck.setOsOpenCmd()
         #HealthCheck.checkPygame()
-        createShortcuts()
 
     @staticmethod
     def setBasicConfig(): # minimum config to work with standalone scripts built with AutoGen

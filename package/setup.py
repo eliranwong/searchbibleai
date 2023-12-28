@@ -22,7 +22,7 @@ with open(os.path.join(package, "requirements.txt"), "r") as fileObj:
 # https://packaging.python.org/en/latest/guides/distributing-packages-using-setuptools/
 setup(
     name=package,
-    version="0.0.46",
+    version="0.0.47",
     python_requires=">=3.8",
     description="Search Bible AI - Integrate Unique Bible App resources with AI tools",
     long_description=long_description,
@@ -57,9 +57,9 @@ setup(
     keywords="ai unique bible search openai google chatgpt gemini chromadb",
     url="https://letmedoit.ai",
     project_urls={
-        "Source": f"https://github.com/eliranwong/{package}ai",
-        "Tracker": f"https://github.com/eliranwong/{package}ai/issues",
-        "Documentation": f"https://github.com/eliranwong/{package}ai/wiki",
+        "Source": f"https://github.com/eliranwong/{package}",
+        "Tracker": f"https://github.com/eliranwong/{package}/issues",
+        "Documentation": f"https://github.com/eliranwong/{package}/wiki",
         "Funding": "https://www.paypal.me/MarvelBible",
     },
     classifiers=[
