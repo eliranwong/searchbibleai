@@ -16,7 +16,7 @@ class Bible:
 
     @staticmethod
     def getUbaBibleList() -> list:
-        return [i for i in os.listdir(os.path.join(config.packageFolder, "data", "bibles")) if os.path.isfile(os.path.join(config.packageFolder, "data", "bibles", i)) and i.endswith(".bible")]
+        return [i[:-6] for i in os.listdir(os.path.join(config.packageFolder, "data", "bibles")) if os.path.isfile(os.path.join(config.packageFolder, "data", "bibles", i)) and i.endswith(".bible")]
 
     @staticmethod
     def getDbPath(bible: str) -> str:

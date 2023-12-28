@@ -210,6 +210,7 @@ def search(bible:str="NET", paragraphs:bool=False, simpleSearch="") -> None:
         n_results = config.maxClosestMatches
         where = None
         contains = None
+        regex = None
     else:
         # user input
         HealthCheck.print2(f"SEARCH {'PARAGRAPHS' if paragraphs else 'VERSES'}")
@@ -353,7 +354,9 @@ def search(bible:str="NET", paragraphs:bool=False, simpleSearch="") -> None:
             book_abbr = abbrev[str(book)][0]
             if not regex or (regex and re.search(regex, scripture, flags=re.IGNORECASE)):
                 print(f"({book_abbr} {chapter}:{verse}) {scripture.strip()}")
-    HealthCheck.print2(config.divider)
+    
+    if not simpleSearch:
+        HealthCheck.print2(config.divider)
 
 def main():
     # Create the parser
