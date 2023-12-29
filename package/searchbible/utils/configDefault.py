@@ -80,6 +80,8 @@ defaultSettings = (
 
     ('terminalEditorScrollLineCount', 20),
     ('maxClosestMatches', 20),
+    ('compareBibles', False),
+    ('compareBibleVersions', ["KJV", "NET"]),
 )
 
 # save default configs

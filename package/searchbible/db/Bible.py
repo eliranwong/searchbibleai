@@ -40,6 +40,40 @@ class Bible:
             return os.path.join(config.storagedirectory, "bibles", "NET")
 
     @staticmethod
+    def getSingleItem(ref: str, bible: str, paragraphs: bool=False) -> tuple:
+        # get either a single verse or a single section of paragraphs
+        # expect ref in the format, like "1.1.1"
+        # keep mainText
+        mainText = config.mainText
+
+        dbpath = Bible.getDbPath(bible)
+        if not dbpath:
+            config.mainText = mainText
+            return ()
+        chroma_client = chromadb.PersistentClient(dbpath, Settings(anonymized_telemetry=False))
+        collection = chroma_client.get_or_create_collection(
+            name="paragraphs" if paragraphs else "verses",
+            metadata={"hnsw:space": "cosine"},
+            embedding_function=HealthCheck.getEmbeddingFunction(embeddingModel="all-mpnet-base-v2"),
+        )
+        try:
+            if paragraphs:
+                res = collection.get(where={"start": ref})
+                metadata = res["metadatas"][0]
+                document = res["documents"][0]
+                config.mainText = mainText
+                return (metadata["start"], metadata["book_start"], metadata["chapter_start"], metadata["verse_start"], metadata["chapter_end"], metadata["verse_end"], document)
+            else:
+                res = collection.get(where={"reference": ref})
+                metadata = res["metadatas"][0]
+                document = res["documents"][0]
+                config.mainText = mainText
+                return (metadata["reference"], metadata["book"], metadata["chapter"], metadata["verse"], document)
+        except:
+            config.mainText = mainText
+            return ()   
+
+    @staticmethod
     def getVerses(refs: list, bible: str = "NET") -> list:
         isChapter = (len(refs) == 1 and len(refs[0]) == 3)
 

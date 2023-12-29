@@ -91,6 +91,17 @@ def getLastEntry(logFile: str) -> str:
             return lines[-1][1:].strip()
     return ""
 
+def compareBibles(ref: str, paragraphs: bool=False) -> None:
+    if config.compareBibles:
+        for i in filter(lambda x: not x == config.mainText, config.compareBibleVersions):
+            if data := Bible.getSingleItem(ref, i, paragraphs):
+                *_, itemContent = data
+                if paragraphs:
+                    itemContent = re.sub("\\A.*?\n", "", itemContent.strip())
+                    print(f"({i})\n{itemContent}\n")
+                else:
+                    HealthCheck.print4(f"({i}) {itemContent.strip()}")
+
 def read(default: str="") -> None:
     HealthCheck.print2("Search Bible AI")
     HealthCheck.print3("Developed by: Eliran Wong")
@@ -175,7 +186,7 @@ def read(default: str="") -> None:
                     # check if it is a single reference; display a full chapter
                     fullChapter, verses = Bible.getVerses(refs, config.mainText)
                     chapterTitle = False
-                    for _, book, chapter, verse, scripture in fullChapter:
+                    for ref, book, chapter, verse, scripture in fullChapter:
                         if not chapterTitle:
                             book_abbr = abbrev[str(book)][0]
                             HealthCheck.print2(f"# {book_abbr} {chapter}")
@@ -185,14 +196,16 @@ def read(default: str="") -> None:
                         if config.chapterParagraphsAndSubheadings and f"{book}.{chapter}.{verse}" in agbSubheadings:
                             HealthCheck.print2(f"## {agbSubheadings[f'{book}.{chapter}.{verse}']}")
                         HealthCheck.print4(f"({verse}) {scripture.strip()}")
+                        compareBibles(ref)
                     # draw a whole chapter
                     HealthCheck.print2(config.divider)
                 else:
                     verses = Bible.getVerses(refs, config.mainText)
                 # display all verses
-                for _, book, chapter, verse, scripture in verses:
+                for ref, book, chapter, verse, scripture in verses:
                     book_abbr = abbrev[str(book)][0]
                     HealthCheck.print4(f"({book_abbr} {chapter}:{verse}) {scripture.strip()}")
+                    compareBibles(ref)
             else:
                 search(bible=config.mainText, paragraphs=False, simpleSearch=userInput)
 
@@ -312,7 +325,7 @@ def search(bible:str="NET", paragraphs:bool=False, simpleSearch="") -> None:
             contains = ""
         # search for meaning
         HealthCheck.print2("Search for meaning:")
-        meaning = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_semantic_session)
+        meaning = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_semantic_session, default=getLastEntry(search_semantic_history))
         if meaning.lower() == config.exit_entry:
             return
         if meaning:
@@ -375,18 +388,20 @@ def search(bible:str="NET", paragraphs:bool=False, simpleSearch="") -> None:
         verses = sorted(verses, key=lambda x: version.parse(x[0]))
 
     if paragraphs:
-        for _, book, chapter, verse, chapter_end, verse_end, scripture in verses:
+        for ref, book, chapter, verse, chapter_end, verse_end, scripture in verses:
             book_abbr = abbrev[str(book)][0]
             if not regex or (regex and re.search(regex, scripture, flags=re.I|re.M)):
                 HealthCheck.print2(f"# {book_abbr} {chapter}:{verse}-{chapter_end}:{verse_end}")
                 scripture = re.sub(r"\A(.+?)$", r"<{0}>## \1</{0}>".format(config.terminalPromptIndicatorColor2), scripture, flags=re.M)
                 scripture = re.sub("^([0-9]+?:[0-9]+?) ", r"<{0}>(\1)</{0}>".format(config.terminalPromptIndicatorColor2), scripture, flags=re.M)
-                print_formatted_text(HTML(f"## {scripture.strip()}\n"))
+                print_formatted_text(HTML(f"{scripture.strip()}\n"))
+                compareBibles(ref, paragraphs=True)
     else:
-        for _, book, chapter, verse, scripture in verses:
+        for ref, book, chapter, verse, scripture in verses:
             book_abbr = abbrev[str(book)][0]
             if not regex or (regex and re.search(regex, scripture, flags=re.IGNORECASE)):
                 HealthCheck.print4(f"({book_abbr} {chapter}:{verse}) {scripture.strip()}")
+                compareBibles(ref)
     
     if not simpleSearch:
         HealthCheck.print2(config.divider)
