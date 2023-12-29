@@ -92,7 +92,7 @@ def getLastEntry(logFile: str) -> str:
 def read(default: str="") -> None:
     HealthCheck.print2("Search Bible AI")
     HealthCheck.print3("Developed by: Eliran Wong")
-    HealthCheck.print3("Open source: https://github.com/eliranwong/searchbible")
+    HealthCheck.print3("Open source: https://github.com/eliranwong/searchbibleai")
     HealthCheck.print2(config.divider)
     HealthCheck.print("* enter a single reference to display a full chapter")
     HealthCheck.print("* enter multiple references to display verses")
