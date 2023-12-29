@@ -36,6 +36,8 @@ from searchbible.utils.BibleVerseParser import BibleVerseParser
 from searchbible.utils.prompt_validator import NumberValidator
 from searchbible.utils.prompts import Prompts
 from searchbible.db.Bible import Bible
+from searchbible.utils.AGBsubheadings import agbSubheadings
+from searchbible.utils.AGBparagraphs_expanded import agbParagraphs
 from packaging import version
 from chromadb.config import Settings
 from prompt_toolkit.styles import Style
@@ -119,6 +121,13 @@ def read(default: str="") -> None:
         buffer = event.app.current_buffer
         buffer.text = ".paragraphs"
         buffer.validate_and_handle()
+    @this_key_bindings.add("c-p")
+    def _(event):
+        config.chapterParagraphsAndSubheadings = not config.chapterParagraphsAndSubheadings
+        HealthCheck.print3(f"Chapter Paragraphs and Subheadings: {'ON' if config.chapterParagraphsAndSubheadings else 'OFF'}")
+        buffer = event.app.current_buffer
+        buffer.text = ":"
+        buffer.validate_and_handle()
 
     prompts = Prompts(custom_key_bindings=this_key_bindings)
 
@@ -171,6 +180,10 @@ def read(default: str="") -> None:
                             book_abbr = abbrev[str(book)][0]
                             HealthCheck.print2(f"# {book_abbr} {chapter}")
                             chapterTitle = True
+                        elif config.chapterParagraphsAndSubheadings and (book, chapter, verse) in agbParagraphs:
+                            print("")
+                        if config.chapterParagraphsAndSubheadings and f"{book}.{chapter}.{verse}" in agbSubheadings:
+                            HealthCheck.print2(f"## {agbSubheadings[f'{book}.{chapter}.{verse}']}")
                         HealthCheck.print4(f"({verse}) {scripture.strip()}")
                     # draw a whole chapter
                     HealthCheck.print2(config.divider)

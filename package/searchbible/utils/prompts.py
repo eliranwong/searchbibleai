@@ -132,6 +132,7 @@ class Prompts:
             "ctrl+q": "quit / exit current feature",
             "ctrl+f": "search verses",
             "esc+f": "search paragraphs",
+            "ctrl+p": "toggle chapter paragraphs and subheadings",
             "ctrl+z": "cancel typing",
             "ctrl+a": "select / unselect all",
             "ctrl+c": "copy [w/ mouse support]",

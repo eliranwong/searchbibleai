@@ -12,19 +12,37 @@ Built upon our projects, the [UniqueBible App](https://github.com/eliranwong/Uni
 
 > searchbible
 
-To specify a bible version for searches, e.g. KJV:
-
-> searchbible KJV
-
 * enter a single reference to display a full chapter
 
 * enter multiple references to display verses
 
-* enter '.verses' or press 'Ctrl+F' to search verses
+* enter a bible version abbreviation, e.g. KJV, to switch to a particular bible version")
 
-* enter '.paragraphs' or press 'Ctrl+P' to search paragraphs
+* enter a search query to perform a simple search")
+
+* enter '.verses' or press 'Ctrl+F' to perform a detailed search for verses")
+
+* enter '.paragraphs' or press 'Esc+F' to perform a detailed search for paragraphs")
 
 * enter '{config.exit_entry}' or press 'Ctrl+Q' to exit current feature of quit the app
+
+## Shortcuts
+
+* enter ":" to reload previously selected chapter and verse
+
+* enter "\<chatper_number\>:" to open a particular chapter in the same book, e.g. "3:"
+
+* enter ":\<verse_number\>" to select a particular verse in the same chapter, e.g. ":16"
+
+To start with default entry from terminal, e.g.:
+
+> searchbible KJV
+
+> searchbible "John 3:16; Rm 5:8"
+
+> searchbible "Jesus love"
+
+## UBA module converter
 
 To convert an UniqueBible App bible file, with a given path, e.g.:
 
@@ -34,11 +52,11 @@ To convert an UniqueBible App bible file, with a given path, e.g.:
 
 1. Support conversion of UnqiueBible App bibles (done)
 
-2. Build simple cli interface for reading single bible chapter (partial)
+2. Build simple cli interface for reading single bible chapter (done)
 
-3. Build simple cli interface for searching verses (partial)
+3. Build simple cli interface for searching verses (done)
 
-4. Build simple cli interface for searching paragraphs (partial)
+4. Build simple cli interface for searching paragraphs (done)
 
 5. Integrates ChatGPT and Gemini Pro features (pending)
 

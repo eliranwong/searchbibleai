@@ -51,6 +51,7 @@ defaultSettings = (
     ("mainV", 16),
     ("enableCaseSensitiveSearch", False),
     ("noWordWrapBibles", []), # some bibles display better, without word wrap feature, e.g. CUV
+    ("chapterParagraphsAndSubheadings", True),
 
     ('terminalEnableTermuxAPI', False),
     ('terminalEditorScrollLineCount', 20),
