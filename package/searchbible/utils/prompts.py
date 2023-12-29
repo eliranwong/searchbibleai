@@ -130,7 +130,9 @@ class Prompts:
     def showKeyBindings(self):
         bindings = {
             "ctrl+q": "quit / exit current feature",
-            "ctrl+z": "cancel",
+            "ctrl+f": "search verses",
+            "esc+f": "search paragraphs",
+            "ctrl+z": "cancel typing",
             "ctrl+a": "select / unselect all",
             "ctrl+c": "copy [w/ mouse support]",
             "ctrl+v": "paste [w/ mouse support]",

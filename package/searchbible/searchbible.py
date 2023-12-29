@@ -29,6 +29,7 @@ from searchbible.utils.configDefault import *
 HealthCheck.check()
 
 # Start of main application
+from prompt_toolkit import print_formatted_text, HTML
 import chromadb, re, argparse, shutil
 from searchbible.utils.BibleBooks import BibleBooks
 from searchbible.utils.BibleVerseParser import BibleVerseParser
@@ -77,7 +78,18 @@ promptStyle = Style.from_dict({
     "indicator": config.terminalPromptIndicatorColor2,
 })
 
-def read(default="") -> None:
+def getLastEntry(logFile: str) -> str:
+    def isEntry(line):
+        line = line.strip()
+        return (re.search("^\+[^\.].*?$", line) and not line[1:] in (config.exit_entry, config.cancel_entry))
+    if os.path.isfile(logFile) and not os.path.getsize(logFile) == 0:
+        with open(logFile, "r", encoding="utf-8") as fileObj:
+            lines = tuple(filter(isEntry, fileObj.readlines()))
+        if lines:
+            return lines[-1][1:].strip()
+    return ""
+
+def read(default: str="") -> None:
     HealthCheck.print2("Search Bible AI")
     HealthCheck.print3("Developed by: Eliran Wong")
     HealthCheck.print3("Open source: https://github.com/eliranwong/searchbible")
@@ -91,11 +103,8 @@ def read(default="") -> None:
     HealthCheck.print(f"* enter '{config.exit_entry}' or press 'Ctrl+Q' to exit current feature of quit this app")
     HealthCheck.print2(config.divider)
 
-    if not default and os.path.isfile(read_history) and not os.path.getsize(read_history) == 0:
-        with open(read_history, "r", encoding="utf-8") as fileObj:
-            last_line = fileObj.readlines()[-1].strip()
-        if last_line.startswith("+"):
-            default = last_line[1:]
+    if not default:
+        default = getLastEntry(read_history)
 
     parser = BibleVerseParser(config.parserStandarisation)
 
@@ -114,7 +123,14 @@ def read(default="") -> None:
     prompts = Prompts(custom_key_bindings=this_key_bindings)
 
     while True:
-        userInput = prompts.simplePrompt(style=config.promptStyle1, promptSession=read_session, completer=read_completer, default=default, accept_default=True if default else False)
+        userInput = prompts.simplePrompt(
+            style=config.promptStyle1,
+            promptSession=read_session,
+            completer=read_completer,
+            default=default,
+            accept_default=True if default else False,
+            bottom_toolbar=" [ctrl+q] exit [ctrl+k] shortcut keys ",
+        )
         default = ""
         if userInput == config.exit_entry:
             break
@@ -218,7 +234,7 @@ def search(bible:str="NET", paragraphs:bool=False, simpleSearch="") -> None:
         # search in books
         HealthCheck.print2("In books (use '||' for combo, '-' for range):")
         print("e.g. Gen||Matt-John||Rev")
-        books = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_book_session, completer=book_completer)
+        books = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_book_session, completer=book_completer, default=getLastEntry(search_book_history))
         if books.lower() == config.exit_entry:
             return
         if books.lower() == "all":
@@ -234,7 +250,7 @@ def search(bible:str="NET", paragraphs:bool=False, simpleSearch="") -> None:
         # search in chapters
         HealthCheck.print2("In chapters (use '||' for combo, '-' for range):")
         print("e.g. 2||4||6-8||10")
-        chapters = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_chapter_session, validator=NumberValidator())
+        chapters = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_chapter_session, validator=NumberValidator(), default=getLastEntry(search_chapter_history))
         if chapters.lower() == config.exit_entry:
             return
         if chapters.lower() == "all":
@@ -273,7 +289,7 @@ def search(bible:str="NET", paragraphs:bool=False, simpleSearch="") -> None:
         # search for plain words
         HealthCheck.print2("Search for plain words ('||' denotes 'or'; '&amp;&amp;' denotes 'and'):")
         print("e.g. Lord&amp;&amp;God||Jesus&amp;&amp;love")
-        contains = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_literal_session)
+        contains = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_literal_session, default=getLastEntry(search_literal_history))
         if contains.lower() == config.exit_entry:
             return
         if contains.strip():
@@ -290,14 +306,16 @@ def search(bible:str="NET", paragraphs:bool=False, simpleSearch="") -> None:
             HealthCheck.print2("Maximum number of closest matches:")
             # specify number of closest matches
             default_n_results = config.maxClosestMatches
-            n_results = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_closest_match_session, validator=NumberValidator(), default=default_n_results)
+            n_results = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_closest_match_session, validator=NumberValidator(), default=str(default_n_results))
             if n_results.lower() == config.exit_entry:
                 return
-            if not n_results or n_results <= 0:
-                config.maxClosestMatches = n_results = default_n_results
+            if n_results and int(n_results) > 0:
+                config.maxClosestMatches = int(n_results)
+            else:
+                config.maxClosestMatches = default_n_results
         # search for regex
         HealthCheck.print2("Search for regular expression:")
-        regex = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_regex_session)
+        regex = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_regex_session, default=getLastEntry(search_regex_history))
         if regex.lower() == config.exit_entry:
             return
 
@@ -315,7 +333,7 @@ def search(bible:str="NET", paragraphs:bool=False, simpleSearch="") -> None:
         # run query
         res = collection.query(
             query_texts=[meaning],
-            n_results = n_results,
+            n_results = config.maxClosestMatches,
             where=where,
             where_document=contains if contains else None,
         )
@@ -325,7 +343,7 @@ def search(bible:str="NET", paragraphs:bool=False, simpleSearch="") -> None:
             where_document=contains if contains else None,
         )
     HealthCheck.print2(config.divider)
-    print(f">>> Retrieved {'paragraphs' if paragraphs else 'verses'}: \n")
+    HealthCheck.print2(f">>> Retrieved {'paragraphs' if paragraphs else 'verses'}:\n")
 
     if meaning:
         metadatas = res["metadatas"][0]
@@ -348,12 +366,14 @@ def search(bible:str="NET", paragraphs:bool=False, simpleSearch="") -> None:
             book_abbr = abbrev[str(book)][0]
             if not regex or (regex and re.search(regex, scripture, flags=re.I|re.M)):
                 HealthCheck.print2(f"# {book_abbr} {chapter}:{verse}-{chapter_end}:{verse_end}")
-                print(f"## {scripture.strip()}\n")
+                scripture = re.sub(r"\A(.+?)$", r"<{0}>## \1</{0}>".format(config.terminalPromptIndicatorColor2), scripture, flags=re.M)
+                scripture = re.sub("^([0-9]+?:[0-9]+?) ", r"<{0}>(\1)</{0}>".format(config.terminalPromptIndicatorColor2), scripture, flags=re.M)
+                print_formatted_text(HTML(f"## {scripture.strip()}\n"))
     else:
         for _, book, chapter, verse, scripture in verses:
             book_abbr = abbrev[str(book)][0]
             if not regex or (regex and re.search(regex, scripture, flags=re.IGNORECASE)):
-                print(f"({book_abbr} {chapter}:{verse}) {scripture.strip()}")
+                HealthCheck.print4(f"({book_abbr} {chapter}:{verse}) {scripture.strip()}")
     
     if not simpleSearch:
         HealthCheck.print2(config.divider)

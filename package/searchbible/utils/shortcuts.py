@@ -6,10 +6,11 @@ import shutil
 appName = "SearchBibleAI"
 
 def createShortcuts():
+    def notify():
+        config.print2("Creating shortcuts ...")
+
     binFolder = os.path.dirname(sys.executable)
     searchbible_executable = os.path.join(binFolder, "searchbible")
-
-    config.print2("Creating shortcuts ...")
 
     icoFile = os.path.join(config.packageFolder, "icons", "searchbibleai.ico")
     pngFile = os.path.join(config.packageFolder, "icons", "searchbibleai.png")
@@ -32,7 +33,7 @@ def createShortcuts():
         if not os.path.exists(shortcutBat1):
             for i in (shortcutBat1, desktopShortcut1, desktopShortcut2, sendToShortcut):
                 try:
-                    print("creating shortcuts ...")
+                    notify()
                     with open(i, "w") as fileObj:
                         fileObj.write(shortcutCommand1)
                     print(f"Created: {shortcutBat1}")
@@ -45,7 +46,7 @@ def createShortcuts():
         if os.path.isdir(desktopPath):
             shortcut_file = os.path.join(config.packageFolder, f"{appName}.command")
             if not os.path.isfile(shortcut_file):
-                print("creating shortcut ...")
+                notify()
                 with open(shortcut_file, "w") as f:
                     f.write("#!/bin/bash\n")
                     f.write(f"cd {config.packageFolder}\n")
@@ -72,7 +73,7 @@ Name={3}
 
         linuxDesktopFile = os.path.join(config.packageFolder, f"{appName}.desktop")
         if not os.path.exists(linuxDesktopFile):
-            print("creating shortcut ...")
+            notify()
             # Create .desktop shortcut
             with open(linuxDesktopFile, "w") as fileObj:
                 fileObj.write(desktopFileContent())
