@@ -33,8 +33,9 @@ from prompt_toolkit import print_formatted_text, HTML
 import chromadb, re, argparse, shutil
 from searchbible.utils.BibleBooks import BibleBooks
 from searchbible.utils.BibleVerseParser import BibleVerseParser
-from searchbible.utils.prompt_validator import NumberValidator
 from searchbible.utils.prompts import Prompts
+from searchbible.utils.prompt_dialogs import TerminalModeDialogs
+from searchbible.utils.prompt_validator import NumberValidator
 from searchbible.db.Bible import Bible
 from searchbible.utils.AGBsubheadings import agbSubheadings
 from searchbible.utils.AGBparagraphs_expanded import agbParagraphs
@@ -113,8 +114,21 @@ def read(default: str="") -> None:
     HealthCheck.print("* enter a search query to perform a simple search")
     HealthCheck.print("* enter '.verses' or press 'Ctrl+F' to perform a detailed search for verses")
     HealthCheck.print("* enter '.paragraphs' or press 'Esc+F' to perform a detailed search for paragraphs")
+    HealthCheck.print("* press 'Ctrl+K' for more keyboard shortcuts")
     HealthCheck.print(f"* enter '{config.exit_entry}' or press 'Ctrl+Q' to exit current feature of quit this app")
     HealthCheck.print2(config.divider)
+
+    def selectBibleForComparison():
+        dialogs = TerminalModeDialogs(None)
+        options = Bible.getBibleList()
+        versions = dialogs.getMultipleSelection(
+            title="Bibles for Comparison",
+            text="Select bible version(s):",
+            options=options,
+            default_values=config.compareBibleVersions,
+        )
+        if versions:
+            config.compareBibleVersions = versions
 
     if not default:
         default = getLastEntry(read_history)
@@ -133,6 +147,18 @@ def read(default: str="") -> None:
         buffer.text = ".paragraphs"
         buffer.validate_and_handle()
     @this_key_bindings.add("c-p")
+    def _(event):
+        config.compareBibles = not config.compareBibles
+        HealthCheck.print3(f"Bible Comparison: {'ON' if config.compareBibles else 'OFF'}")
+        buffer = event.app.current_buffer
+        buffer.text = getLastEntry(read_history)
+        buffer.validate_and_handle()
+    @this_key_bindings.add("escape", "p")
+    def _(event):
+        buffer = event.app.current_buffer
+        buffer.text = ".bibles"
+        buffer.validate_and_handle()
+    @this_key_bindings.add("c-s")
     def _(event):
         config.chapterParagraphsAndSubheadings = not config.chapterParagraphsAndSubheadings
         HealthCheck.print3(f"Chapter Paragraphs and Subheadings: {'ON' if config.chapterParagraphsAndSubheadings else 'OFF'}")
@@ -160,6 +186,8 @@ def read(default: str="") -> None:
         elif userInput == ".paragraphs":
             # ctrl+p to search paragraphs
             search(bible=config.mainText, paragraphs=True)
+        elif userInput == ".bibles":
+            selectBibleForComparison()
         elif userInput:
             HealthCheck.print2(config.divider)
 
@@ -368,7 +396,8 @@ def search(bible:str="NET", paragraphs:bool=False, simpleSearch="") -> None:
             where=where,
             where_document=contains if contains else None,
         )
-    HealthCheck.print2(config.divider)
+    if not simpleSearch:
+        HealthCheck.print2(config.divider)
     HealthCheck.print2(f">>> Retrieved {'paragraphs' if paragraphs else 'verses'}:\n")
 
     if meaning:

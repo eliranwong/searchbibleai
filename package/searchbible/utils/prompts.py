@@ -130,9 +130,11 @@ class Prompts:
     def showKeyBindings(self):
         bindings = {
             "ctrl+q": "quit / exit current feature",
+            "ctrl+s": "toggle chapter subheadings",
             "ctrl+f": "search verses",
             "esc+f": "search paragraphs",
-            "ctrl+p": "toggle chapter paragraphs and subheadings",
+            "ctrl+p": "toggle bible comparison",
+            "esc+p": "select bibles for comparison",
             "ctrl+z": "cancel typing",
             "ctrl+a": "select / unselect all",
             "ctrl+c": "copy [w/ mouse support]",
@@ -167,9 +169,9 @@ class Prompts:
             "esc+d": "swap developer mode",
             "esc+r": "restart SearchBibleAI",
         }
-        textEditor = config.customTextEditor.split(" ", 1)[0]
-        bindings["ctrl+e"] = f"""edit current input with '{config.customTextEditor if textEditor and config.isPackageInstalled(textEditor) else "eTextEdit"}'"""
-        bindings["esc+p"] = f"""edit the previous response with '{config.customTextEditor if textEditor and config.isPackageInstalled(textEditor) else "eTextEdit"}'"""
+        #textEditor = config.customTextEditor.split(" ", 1)[0]
+        #bindings["ctrl+e"] = f"""edit current input with '{config.customTextEditor if textEditor and config.isPackageInstalled(textEditor) else "eTextEdit"}'"""
+        #bindings["esc+p"] = f"""edit the previous response with '{config.customTextEditor if textEditor and config.isPackageInstalled(textEditor) else "eTextEdit"}'"""
         multilineBindings = {
             "enter": "new line",
             "esc+enter": "complete entry",
