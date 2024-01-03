@@ -135,6 +135,8 @@ class Prompts:
             "esc+f": "search paragraphs",
             "ctrl+p": "toggle bible comparison",
             "esc+p": "select bibles for comparison",
+            "ctrl+g": "launch ChatGPT prompt",
+            "esc+g": "launch GeminiPro prompt",
             "ctrl+z": "cancel typing",
             "ctrl+a": "select / unselect all",
             "ctrl+c": "copy [w/ mouse support]",

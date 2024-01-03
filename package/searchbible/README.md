@@ -16,13 +16,23 @@ Built upon our projects, the [UniqueBible App](https://github.com/eliranwong/Uni
 
 * enter multiple references to display verses
 
-* enter a bible version abbreviation, e.g. KJV, to switch to a particular bible version")
+* enter a bible version abbreviation, e.g. KJV, to switch to a particular bible version
 
-* enter a search query to perform a simple search")
+* enter a search query to perform a simple search
 
-* enter '.verses' or press 'Ctrl+F' to perform a detailed search for verses")
+* enter '.verses' or press 'Ctrl+F' to perform a detailed search for verses
 
-* enter '.paragraphs' or press 'Esc+F' to perform a detailed search for paragraphs")
+* enter '.paragraphs' or press 'Esc+F' to perform a detailed search for paragraphs
+
+* press 'Ctrl+P' to toggle bible comparison
+
+* press 'Esc+P' to select bible versions for comparison
+
+* press 'Ctrl+G' to launch ChatGPT chatbot
+
+* press 'Esc+G' to luanch GeminiPro chatbot
+
+* press 'Ctrl+K' to display available shortcut keys
 
 * enter '{config.exit_entry}' or press 'Ctrl+Q' to exit current feature of quit the app
 
@@ -58,11 +68,13 @@ To convert an UniqueBible App bible file, with a given path, e.g.:
 
 4. Build simple cli interface for searching paragraphs (done)
 
-5. Integrates ChatGPT and Gemini Pro features (pending)
+5. Integrate bible comparison feature (done)
 
-6. Support more UnqiueBible App bible resources (pending)
+6. Integrates ChatGPT and Gemini Pro features (partial)
 
-7. Build a Qt-based graphical user interface, like we do in [UniqueBible App](https://github.com/eliranwong/UniqueBible) (pending)
+7. Support more UnqiueBible App bible resources (pending)
+
+8. Build a Qt-based graphical user interface, like we do in [UniqueBible App](https://github.com/eliranwong/UniqueBible) (pending)
 
 # New Features that are not available in oiginal Unique Bible App
 

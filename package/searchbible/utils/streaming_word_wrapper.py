@@ -1,11 +1,11 @@
 from searchbible import config
 from searchbible.health_check import HealthCheck
-from searchbible.utils.tts_utils import TTSUtil
+#from searchbible.utils.tts_utils import TTSUtil
 if not hasattr(config, "exit_entry"):
     HealthCheck.setBasicConfig()
     HealthCheck.saveConfig()
     print("Updated!")
-HealthCheck.setPrint()
+#HealthCheck.setPrint()
 #import pygments
 #from pygments.lexers.markup import MarkdownLexer
 #from prompt_toolkit.formatted_text import PygmentsTokens
@@ -91,6 +91,7 @@ class StreamingWordWrapper:
 
     def streamOutputs(self, streaming_event, completion, openai=False):
         terminal_width = shutil.get_terminal_size().columns
+        config.new_chat_response = ""
 
         def finishOutputs(wrapWords, chat_response, terminal_width=terminal_width):
             config.wrapWords = wrapWords
@@ -98,6 +99,8 @@ class StreamingWordWrapper:
             config.tempChunk = ""
             print("\n")
             # add chat response to messages
+            if chat_response:
+                config.new_chat_response = chat_response
             if hasattr(config, "currentMessages") and chat_response:
                 config.currentMessages.append({"role": "assistant", "content": chat_response})
             # auto pager feature
@@ -153,7 +156,7 @@ class StreamingWordWrapper:
                     else:
                         print(answer, end='', flush=True) # Print the response
                     # speak streaming words
-                    self.readAnswer(answer)
+                    #self.readAnswer(answer)
             else:
                 finishOutputs(wrapWords, chat_response)
                 return None
@@ -168,8 +171,8 @@ class StreamingWordWrapper:
             # reset config.tempChunk
             config.tempChunk = ""
             # play with tts
-            if config.ttsOutput:
-                TTSUtil.play(chunk)
+            #if config.ttsOutput:
+                #TTSUtil.play(chunk)
         else:
             # append to a chunk for reading
             config.tempChunk += answer

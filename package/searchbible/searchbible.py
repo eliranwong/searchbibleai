@@ -31,6 +31,8 @@ HealthCheck.check()
 # Start of main application
 from prompt_toolkit import print_formatted_text, HTML
 import chromadb, re, argparse, shutil
+from searchbible.chatgpt import ChatGPT
+from searchbible.geminipro import GeminiPro
 from searchbible.utils.BibleBooks import BibleBooks
 from searchbible.utils.BibleVerseParser import BibleVerseParser
 from searchbible.utils.prompts import Prompts
@@ -146,6 +148,16 @@ def read(default: str="") -> None:
         buffer = event.app.current_buffer
         buffer.text = ".paragraphs"
         buffer.validate_and_handle()
+    @this_key_bindings.add("c-g")
+    def _(event):
+        buffer = event.app.current_buffer
+        buffer.text = ".chatgpt"
+        buffer.validate_and_handle()
+    @this_key_bindings.add("escape", "g")
+    def _(event):
+        buffer = event.app.current_buffer
+        buffer.text = ".geminipro"
+        buffer.validate_and_handle()
     @this_key_bindings.add("c-p")
     def _(event):
         config.compareBibles = not config.compareBibles
@@ -188,6 +200,16 @@ def read(default: str="") -> None:
             search(bible=config.mainText, paragraphs=True)
         elif userInput == ".bibles":
             selectBibleForComparison()
+        elif userInput == ".chatgpt":
+            ChatGPT(
+                temperature=config.llmTemperature,
+                max_output_tokens = config.chatGPTApiMaxTokens,
+            ).run()
+        elif userInput == ".geminipro":
+            GeminiPro(
+                temperature=config.llmTemperature,
+                max_output_tokens = config.chatGPTApiMaxTokens,
+            ).run()
         elif userInput:
             HealthCheck.print2(config.divider)
 
