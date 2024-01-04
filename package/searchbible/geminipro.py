@@ -58,7 +58,11 @@ class GeminiPro:
         #self.enableVision = (os.path.realpath(__file__).endswith("vision.py"))
 
     def run(self, prompt=""):
-        completer = WordCompleter(bible_study_suggestions, ignore_case=True)
+        completer = WordCompleter(
+            bible_study_suggestions,
+            ignore_case=True,
+            sentence=True,
+        )
         custom_key_bindings = KeyBindings()
 
         @custom_key_bindings.add("c-n")
