@@ -151,23 +151,138 @@ Write a summary on the content given below in reference to the Bible:
 Content:
 """)
 
-bible_study_suggestions.append("""Bible Sermon.
-Write a sermon on the content given below in reference to the Bible:
+bible_study_suggestions.append("""Bible Highlights in an Old Testament passage in the bible.
+Can you give me a detailed summary of this passage?
+How can the meaning of the biblical Hebrew words in this passage provide insights that aid our understanding? Explain the insights with examples.
+What are the key words and phrases used in this passage, and how do they contribute to its meaning?
+How does this passage relate to other passages in the Bible, both within the same book and in other books?
+Please answer all relevant questions pertaining to the following passage.
+You don't need to provide all the verses from the passage, as I am already familiar with it. 
+I want your response focus on my questions.  However, do not repeat my questions word by word in your answer.
 
-Content:
+Please write in detail pertaining to the following passage:
+""")
+
+bible_study_suggestions.append("""Bible Highlights in a New Testament passage in the bible.
+Can you give me a detailed summary of this passage?
+How can the meaning of the biblical Greek words in this passage provide insights that aid our understanding? Explain the insights with examples.
+What are the key words and phrases used in this passage, and how do they contribute to its meaning?
+How does this passage relate to other passages in the Bible, both within the same book and in other books?
+Please answer all relevant questions pertaining to the following passage.
+You don't need to provide all the verses from the passage, as I am already familiar with it. 
+I want your response focus on my questions.  However, do not repeat my questions word by word in your answer.
+
+Please write in detail pertaining to the following passage:
+""")
+
+bible_study_suggestions.append("""Bible Historical Context of an Old Testament passage in the bible.
+In what ways does this passage speak to the struggles that Old Testament People faced in the time of its writing, and how does an understanding of its historical and cultural context help us to better interpret its meaning?
+In what ways does a deeper comprehension of the culture of the Ancient Near East aid in our understanding of the passage? Give examples based on the content of the given passage.
+How does comprehending the social, political, and religious environment of the Old Testament era, along with the distinct obstacles that the people of that time may have encountered in their daily lives, contribute to our interpretation of the given passage? Give examples based on the content of the given passage.
+Please answer all relevant questions pertaining to the following passage.
+Do not give me general message of the passage, as I am seeking specific insights as I am seeking specific insights about Old Testament People stugglings in view of historical context.
+I already know the content of the passage.  Please do not repeat.  
+Do not give me summary of the passage that is not relevant to the struggling or historical context.
+
+Please write in detail pertaining to the following passage:
+""")
+
+bible_study_suggestions.append("""Bible Historical Context of a New Testament passage in the bible.
+In what ways does this passage speak to the struggles that early Christians faced in the time of its writing, and how does an understanding of its historical and cultural context help us to better interpret its meaning?
+In what ways does a deeper comprehension of the Jewish culture aid in our understanding of the passage? Give examples based on the content of the given passage.
+How does comprehending the social, political, and religious environment of the New Testament era, along with the distinct obstacles that the people of that time may have encountered in their daily lives, contribute to our interpretation of the given passage? Give examples based on the content of the given passage.
+Please answer all relevant questions pertaining to the following passage.
+Do not give me general message of the passage, as I am seeking specific insights as I am seeking specific insights about Christian stugglings in view of historical context.
+I already know the content of the passage.  Please do not repeat.  
+Do not give me summary of the passage that is not relevant to the struggling or historical context.
+
+Please write in detail pertaining to the following passage:
+""")
+
+bible_study_suggestions.append("""Bible Themes in an Old Testament passage.
+What are the key themes expressed in this passage?  Please elaborate on each theme in details.  
+Explain how biblical Hebrew studies help us understand each theme.  Povide illustration that aid our understanding, if possible.
+What are the theological implications of this passage, and how does it contribute to our understanding of God's character and plan for humanity?
+How does the New Testament contribute to our comprehension of this Old Testament passage? Give examples and quote related New Testament passages.
+How does the message conveyed in this passage impact our connection with God?
+Please answer all relevant questions pertaining to the following passage.
+Do not give me historical context of the passage, as I already know them. 
+Do not give me general information about the passage, as I am seeking specific themes, theological implications and connection with God.
+
+Please answer all relevant questions pertaining to the following passage:
+""")
+
+bible_study_suggestions.append("""Bible Themes in a New Testament passage.
+What are the key themes expressed in this passage?  Please elaborate on each theme in details.  
+Explain how biblical Greek studies help us understand each theme.  Povide illustration that aid our understanding, if possible.
+What are the theological implications of this passage, and how does it contribute to our understanding of God's character and plan for humanity?
+How does the Old Testament contribute to our comprehension of this New Testament passage? Give examples and quote related Old Testament passages.
+How does the message conveyed in this passage impact our connection with God?
+Please answer all relevant questions pertaining to the following passage.
+Do not give me historical context of the passage, as I already know them. 
+Do not give me general information about the passage, as I am seeking specific themes, theological implications and connection with God.
+
+Please answer all relevant questions pertaining to the following passage:
+""")
+
+bible_study_suggestions.append("""Bible Application.
+Provide detailed applications of a bible passages, without general introduction or summary.
+
+Please address the following questions in your answer:
+How can I relate this passage to my own daily life and personal circumstances?
+How can I apply the principles and teachings of this passage to my relationships with God and others?
+What can I do to apply the lessons from this passage in my daily life?
+Are there any practical steps or behaviors that I can develop or change based on this passage?
+
+Please answer all relevant questions pertaining to the following passage:
+""")
+
+bible_study_suggestions.append("""Bible Sermon.
+Write a sermon with the following questions in mind:
+1. What is the context of the passage? Who wrote it, to whom was it written, and what historical or cultural background is important to know?
+2. What is the main message or theme of the passage? How does it relate to the overall message of the Bible?
+3. What is the message or lesson that you want the congregation to take away from the sermon?
+4. How can I make the sermon relevant and applicable to the lives of the congregation members?
+5. What are some relevant stories, personal experiences, or examples that can be used to illustrate the main points of the sermon?
+6. What are some potential challenges or objections that someone might have to the message of the sermon, and how can those be addressed?
+7. Are there any important theological or doctrinal principles that need to be emphasized or clarified in relation to the passage?
+
+Please write pertaining to the following passage:
+""")
+
+bible_study_suggestions.append("""Bible Devotion.
+Write a devotion on a bible passage, based on the following guidance:
+1. Get a full understanding of its meaning and context.
+2. Reflect on how the passage applies to your own life and experiences.
+3. Consider what message or lesson God may be trying to communicate through the passage.
+4. Decide on a specific theme or topic you want to focus on in your devotion, based on the Bible passage.
+5. Use personal anecdotes, relevant scripture references, and practical applications to help illustrate and reinforce your message.
+6. End your devotion with a call to action or a prayer that encourages readers to apply the lesson to their own lives.
+7. Edit and revise your devotion to ensure that it is clear, concise, and impactful.
+I am already familiar with the contents of the passage, please refrain from providing general introduction or summary.
+I want deep insights about devotions.
+
+Please write pertaining to the following passage:
 """)
 
 bible_study_suggestions.append("""Bible Prayer.
-Write a prayer on the content given below in reference to the Bible:
+Write a prayer pertaining to the following content in reference to the Bible:
+""")
+
+bible_study_suggestions.append("""Bible Short Prayer.
+Write a prayer pertaining to the following content in reference to the Bible.
+(Keep the prayer short and do not make it longer than a paragraph.)
 
 Content:
 """)
 
-bible_study_suggestions.append("""Bible Short Prayer.
-Write a short prayer on the content given below in reference to the Bible:
-(Keep the prayer short and do not make it longer than a paragraph.)
+bible_study_suggestions.append("""Bible Review Questions.
+Assist me to prepare materials for leading a bible study group.
+I'm looking for specific questions that focus on a particular passage, rather than general bible study questions. Could you help me with that?
+I'm hoping to facilitate a meaningful discussion and deeper understanding of this passage through targeted questions. Could you guide me in creating those questions?
+Remember, I am already familiar with the contents of the passage, please refrain from providing me with general information or summary. Please give me review questions for bible studies directly.
 
-Content:
+Please answer all relevant questions pertaining to the following passage:
 """)
 
 bible_study_suggestions.append("""Bible Key Words.
@@ -208,4 +323,16 @@ bible_study_suggestions.append("""Bible Passages.
 Quote relevant Bible passages in relation to the content given below given below. Explain how these passages are related to the given content.
 
 Content:
+""")
+
+bible_study_suggestions.append("""Bible Thought Progression of a bible book / chapter / passage.
+Provide a detailed overview of the author's thought progression in effectively conveying the key messages of the following book / chapter / passage:
+""")
+
+bible_study_suggestions.append("""Bible Canonical Context of a bible book / chapter / passage.
+How is this book / chapter / passage connected or linked with other books in the Bible?
+What is the canonical context of this given book / chapter / passage in light of the whole canon of the bible?
+How does this book / chapter / passage fit into the larger Biblical story in light of the whole canon of the bible?
+                               
+Please answer all relevant questions pertaining to the following book / chapter / passage with concrete examples:
 """)
