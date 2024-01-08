@@ -8,7 +8,12 @@ configFile = os.path.join(packageFolder, "config.py")
 if not os.path.isfile(configFile):
     open(configFile, "a", encoding="utf-8").close()
 
-from searchbible import config
+try:
+    from searchbible import config
+except:
+    # write off problematic config file
+    open(configFile, "w", encoding="utf-8").close()
+    from searchbible import config
 from searchbible.health_check import HealthCheck
 
 # share mainFile and packageFolder paths in config

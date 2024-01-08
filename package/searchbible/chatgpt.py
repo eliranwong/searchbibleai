@@ -47,7 +47,11 @@ class ChatGPT:
         return config.chatGPTApiMinTokens
 
     def run(self, prompt=""):
-        completer = WordCompleter(bible_study_suggestions, ignore_case=True)
+        completer = WordCompleter(
+            bible_study_suggestions,
+            ignore_case=True,
+            sentence=True,
+        )
         custom_key_bindings = KeyBindings()
 
         @custom_key_bindings.add("c-n")
