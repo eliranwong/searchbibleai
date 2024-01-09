@@ -51,7 +51,7 @@ from chromadb.config import Settings
 from prompt_toolkit.styles import Style
 from prompt_toolkit import PromptSession
 from prompt_toolkit.history import FileHistory
-from prompt_toolkit.completion import WordCompleter
+from prompt_toolkit.completion import WordCompleter, FuzzyCompleter
 from prompt_toolkit.shortcuts import set_title, clear_title
 from prompt_toolkit.key_binding import KeyBindings
 from pathlib import Path
@@ -59,17 +59,18 @@ from pathlib import Path
 
 appName = "Search Bible AI"
 abbrev = BibleBooks.abbrev["eng"]
+kjvRefs, _ = BibleBooks().getAllKJVreferences()
 
 historyFolder = os.path.join(config.storagedirectory, "history")
 Path(historyFolder).mkdir(parents=True, exist_ok=True)
 read_history = os.path.join(historyFolder, "read")
 read_session = PromptSession(history=FileHistory(read_history))
-read_suggestions = [i[0] for i in abbrev.values()]
-read_completer = WordCompleter(read_suggestions, ignore_case=True)
+config.read_suggestions = [i[0] for i in abbrev.values()] + kjvRefs
+read_completer = FuzzyCompleter(WordCompleter(config.read_suggestions, ignore_case=True, sentence=True))
 search_book_history = os.path.join(historyFolder, "search_book")
 search_book_session = PromptSession(history=FileHistory(search_book_history))
 book_suggestions = ["ALL"] + [i[0] for i in abbrev.values()]
-book_completer = WordCompleter(book_suggestions, ignore_case=True)
+book_completer = FuzzyCompleter(WordCompleter(book_suggestions, ignore_case=True))
 search_chapter_history = os.path.join(historyFolder, "search_chapter")
 search_chapter_session = PromptSession(history=FileHistory(search_chapter_history))
 search_literal_history = os.path.join(historyFolder, "search_literal")

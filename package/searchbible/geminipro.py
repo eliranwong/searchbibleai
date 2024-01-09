@@ -59,7 +59,7 @@ class GeminiPro:
 
     def run(self, prompt=""):
         completer = WordCompleter(
-            bible_study_suggestions,
+            bible_study_suggestions + config.read_suggestions,
             ignore_case=True,
             sentence=True,
         )

@@ -15,7 +15,7 @@ from prompt_toolkit.styles import Style
 from prompt_toolkit import PromptSession
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.shortcuts import clear
-from prompt_toolkit.completion import WordCompleter
+from prompt_toolkit.completion import WordCompleter, FuzzyCompleter
 from prompt_toolkit.key_binding import KeyBindings
 from pathlib import Path
 import threading, argparse, os, traceback
@@ -48,10 +48,11 @@ class ChatGPT:
 
     def run(self, prompt=""):
         completer = WordCompleter(
-            bible_study_suggestions,
+            bible_study_suggestions + config.read_suggestions,
             ignore_case=True,
             sentence=True,
         )
+        completer = FuzzyCompleter(completer=completer)
         custom_key_bindings = KeyBindings()
 
         @custom_key_bindings.add("c-n")

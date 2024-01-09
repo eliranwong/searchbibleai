@@ -2518,9 +2518,9 @@ class BibleBooks:
         standardAbbreviation = self.booksMap.get(lang)
         abbReferences = []
         bcvReferences = []
-        separator1 = "_" if config.runMode == "terminal" else " "
-        separator2 = "_" if config.runMode == "terminal" else ":"
-        separator3 = "_" if config.runMode == "terminal" else "."
+        separator1 = " "
+        separator2 = ":"
+        separator3 = "."
         for b, value in self.verses.items():
             for c, v in value.items():
                 for i in range(v):
