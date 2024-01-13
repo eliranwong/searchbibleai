@@ -228,11 +228,14 @@ def read(default: str="") -> None:
             elif userInput == ":":
                 # loaded previous selected verse
                 userInput = f"{bookName} {config.mainC}:{config.mainV}"
+            elif re.search("^[0-9]+?:[0-9]+?$", userInput):
+                # change both chapter and verse in the same book
+                userInput = f"{bookName} {userInput}"
             elif re.search("^[0-9]+?:$", userInput):
-                # change chapter
+                # change chapter in the same book
                 userInput = f"{bookName} {userInput[:-1]}:1"
             elif re.search("^:[0-9]+?$", userInput):
-                # change verse
+                # change verse in the same book
                 userInput = f"{bookName} {config.mainC}:{userInput[1:]}"
 
             if refs := parser.extractAllReferences(userInput):
