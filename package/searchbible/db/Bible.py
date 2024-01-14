@@ -92,7 +92,7 @@ class Bible:
             metadata={"hnsw:space": "cosine"},
             embedding_function=HealthCheck.getEmbeddingFunction(embeddingModel="all-mpnet-base-v2"),
         )
-        res = collection.get(where=filters["$or"][0] if isChapter else filters)
+        res = collection.get(where=filters)
         # unpack data
         metadatas = res["metadatas"]
         documents = res["documents"]

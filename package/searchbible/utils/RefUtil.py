@@ -5,7 +5,9 @@ class RefUtil:
         filters = []
         for ref in refs:
             filters += RefUtil.getRefFilter(ref)
-        if filters:
+        if filters and len(filters) == 1:
+            return filters[0]
+        elif filters and len(filters) > 1:
             return {"$or": filters}
         else:
             return {}
@@ -23,8 +25,9 @@ class RefUtil:
                 filter = []
                 filter.append({"$and": [{"book": {"$eq": b}}, {"chapter": {"$eq": c}}, {"verse": {"$gte": v}}]})
                 filter.append({"$and": [{"book": {"$eq": b}}, {"chapter": {"$eq": c2}}, {"verse": {"$lte": v2}}]})
-                for i in range(c, c2):
-                    filter.append({"$and": [{"book": {"$eq": b}}, {"chapter": {"$eq": i}}]})
+                if (c2 - c) > 1:
+                    for i in range(c+1, c2):
+                        filter.append({"$and": [{"book": {"$eq": b}}, {"chapter": {"$eq": i}}]})
                 return filter
         else:
             return []

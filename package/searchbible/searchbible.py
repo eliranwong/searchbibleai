@@ -65,7 +65,7 @@ historyFolder = os.path.join(config.storagedirectory, "history")
 Path(historyFolder).mkdir(parents=True, exist_ok=True)
 read_history = os.path.join(historyFolder, "read")
 read_session = PromptSession(history=FileHistory(read_history))
-config.read_suggestions = [i[0] for i in abbrev.values()] + kjvRefs
+config.read_suggestions = Bible.getBibleList() + [i[0] for i in abbrev.values()] + kjvRefs
 read_completer = FuzzyCompleter(WordCompleter(config.read_suggestions, ignore_case=True, sentence=True))
 search_book_history = os.path.join(historyFolder, "search_book")
 search_book_session = PromptSession(history=FileHistory(search_book_history))
