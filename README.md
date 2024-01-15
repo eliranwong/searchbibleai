@@ -12,6 +12,14 @@ Built upon our projects, the [UniqueBible App](https://github.com/eliranwong/Uni
 
 > searchbible
 
+> searchbible \<query\>
+
+e.g.
+
+> searchbible "John 3:16"
+
+> searchbible "Jesus loves"
+
 * enter a single reference to display a full chapter
 
 * enter multiple references to display verses
@@ -54,9 +62,13 @@ To start with default entry from terminal, e.g.:
 
 ## UBA module converter
 
-To convert an UniqueBible App bible file, with a given path, e.g.:
+To convert an UniqueBible App bible file (*.bible), with a given path, e.g. /temp/KJV.bible:
 
 > searchbibleconverter -b "/temp/KJV.bible"
+
+For batch conversion, place multiple *.bible files in a folder, e.g. /temp/:
+
+> searchbibleconverter -b "/temp/"
 
 # Progress
 
@@ -83,6 +95,8 @@ To convert an UniqueBible App bible file, with a given path, e.g.:
 * support searching individual paragraphs in addition to searching individual verses
 
 * support semantic searches (i.e. search for meaning); both in verses and paragraphs
+
+* support cross-language semantic searches, e.g. search a Greek bible with English input or search an English bible with Chinese input
 
 * combination of literal search, semantic search and regular expression search in a single search
 
