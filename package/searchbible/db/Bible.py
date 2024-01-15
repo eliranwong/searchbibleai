@@ -54,7 +54,7 @@ class Bible:
         collection = chroma_client.get_or_create_collection(
             name="paragraphs" if paragraphs else "verses",
             metadata={"hnsw:space": "cosine"},
-            embedding_function=HealthCheck.getEmbeddingFunction(embeddingModel="all-mpnet-base-v2"),
+            embedding_function=HealthCheck.getEmbeddingFunction(embeddingModel="paraphrase-multilingual-mpnet-base-v2"),
         )
         try:
             if paragraphs:
@@ -90,7 +90,7 @@ class Bible:
         collection = chroma_client.get_or_create_collection(
             name="verses",
             metadata={"hnsw:space": "cosine"},
-            embedding_function=HealthCheck.getEmbeddingFunction(embeddingModel="all-mpnet-base-v2"),
+            embedding_function=HealthCheck.getEmbeddingFunction(embeddingModel="paraphrase-multilingual-mpnet-base-v2"),
         )
         res = collection.get(where=filters)
         # unpack data

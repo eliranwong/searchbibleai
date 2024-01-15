@@ -288,7 +288,7 @@ def search(bible:str="NET", paragraphs:bool=False, simpleSearch="") -> None:
     collection = chroma_client.get_or_create_collection(
         name="paragraphs" if paragraphs else "verses",
         metadata={"hnsw:space": "cosine"},
-        embedding_function=HealthCheck.getEmbeddingFunction(embeddingModel="all-mpnet-base-v2"),
+        embedding_function=HealthCheck.getEmbeddingFunction(embeddingModel="paraphrase-multilingual-mpnet-base-v2"),
     )
 
     def getChapterRange(i):

@@ -26,7 +26,7 @@ defaultSettings = (
     ('terminalPromptIndicatorColor2', 'ansicyan'),
     ('terminalSearchHighlightBackground', 'ansiblue'),
     ('terminalSearchHighlightForeground', 'ansidefault'),
-    ('embeddingModel', 'all-mpnet-base-v2'),
+    ('embeddingModel', 'paraphrase-multilingual-mpnet-base-v2'),
     ('customTextEditor', ""), # e.g. 'micro -softwrap true -wordwrap true'; built-in text editor eTextEdit is used when it is not defined.
     ('pagerView', False),
     ('usePygame', True),

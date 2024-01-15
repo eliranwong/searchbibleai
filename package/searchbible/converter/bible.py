@@ -48,12 +48,12 @@ class ConvertBible:
         collectionVerse = chroma_client.get_or_create_collection(
             name="verses",
             metadata={"hnsw:space": "cosine"},
-            embedding_function=HealthCheck.getEmbeddingFunction(embeddingModel="all-mpnet-base-v2"),
+            embedding_function=HealthCheck.getEmbeddingFunction(embeddingModel="paraphrase-multilingual-mpnet-base-v2"),
         )
         collectionParagraph = chroma_client.get_or_create_collection(
             name="paragraphs",
             metadata={"hnsw:space": "cosine"},
-            embedding_function=HealthCheck.getEmbeddingFunction(embeddingModel="all-mpnet-base-v2"),
+            embedding_function=HealthCheck.getEmbeddingFunction(embeddingModel="paraphrase-multilingual-mpnet-base-v2"),
         )
 
         paragraphTitle = ""
