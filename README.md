@@ -62,13 +62,15 @@ To start with default entry from terminal, e.g.:
 
 ## UBA module converter
 
-To convert an UniqueBible App bible file (*.bible), with a given path, e.g. /temp/KJV.bible:
+To convert an UniqueBible App bible files, with a given path, e.g. /temp/KJV.bible
 
-> searchbibleconverter -b "/temp/KJV.bible"
+> searchbibleconverter -b /temp/KJV.bible
 
-For batch conversion, place multiple *.bible files in a folder, e.g. /temp/:
+For batch conversion, place multiple bible files in a folder, e.g. /temp/
 
-> searchbibleconverter -b "/temp/"
+> searchbibleconverter -b /temp/
+
+![batch_conversion](https://github.com/eliranwong/searchbibleai/assets/25262722/18fb9bf6-1e57-45ca-85c5-232c5b78d0b2)
 
 # Progress
 
