@@ -3,7 +3,7 @@ argparse
 prompt_toolkit
 pygments
 pyperclip
-openai==1.6.1
+openai==1.8.0
 google-cloud-aiplatform
 apsw
 sentence-transformers
