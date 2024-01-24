@@ -46,6 +46,7 @@ from searchbible.utils.prompt_validator import NumberValidator
 from searchbible.db.Bible import Bible
 from searchbible.utils.AGBsubheadings import agbSubheadings
 from searchbible.utils.AGBparagraphs_expanded import agbParagraphs
+from searchbible.utils.bible_studies import bible_study_suggestions
 from packaging import version
 from chromadb.config import Settings
 from prompt_toolkit.styles import Style
@@ -65,7 +66,8 @@ historyFolder = os.path.join(config.storagedirectory, "history")
 Path(historyFolder).mkdir(parents=True, exist_ok=True)
 read_history = os.path.join(historyFolder, "read")
 read_session = PromptSession(history=FileHistory(read_history))
-config.read_suggestions = Bible.getBibleList() + [i[0] for i in abbrev.values()] + kjvRefs
+bible_study_suggestions = [f"{i}[chat]\n" for i in bible_study_suggestions]
+config.read_suggestions = Bible.getBibleList() + [i[0] for i in abbrev.values()] + kjvRefs + bible_study_suggestions
 read_completer = FuzzyCompleter(WordCompleter(config.read_suggestions, ignore_case=True, sentence=True))
 search_book_history = os.path.join(historyFolder, "search_book")
 search_book_session = PromptSession(history=FileHistory(search_book_history))
@@ -88,6 +90,10 @@ promptStyle = Style.from_dict({
     # Prompt.
     "indicator": config.terminalPromptIndicatorColor2,
 })
+
+def removeSpecialEntries(content):
+    return re.sub("\[chatgpt\]|\[chat\]|\[geminipro\]", "", content)
+config.removeSpecialEntries = removeSpecialEntries
 
 def getLastEntry(logFile: str) -> str:
     def isEntry(line):
@@ -196,6 +202,10 @@ def read(default: str="") -> None:
             bottom_toolbar=" [ctrl+q] exit [ctrl+k] shortcut keys ",
         )
         default = ""
+
+        # default chatbot
+        userInput = userInput.replace("[chat]", "[chatgpt]")
+
         if userInput == config.exit_entry:
             break
         elif userInput == ".verses":
@@ -206,11 +216,21 @@ def read(default: str="") -> None:
             search(bible=config.mainText, paragraphs=True)
         elif userInput == ".bibles":
             selectBibleForComparison()
+        elif "[chatgpt]" in userInput:
+            ChatGPT(
+                temperature=config.llmTemperature,
+                max_output_tokens = config.chatGPTApiMaxTokens,
+            ).run(userInput)
         elif userInput == ".chatgpt":
             ChatGPT(
                 temperature=config.llmTemperature,
                 max_output_tokens = config.chatGPTApiMaxTokens,
             ).run()
+        elif "[geminipro]" in userInput:
+            GeminiPro(
+                temperature=config.llmTemperature,
+                max_output_tokens = config.chatGPTApiMaxTokens,
+            ).run(userInput)
         elif userInput == ".geminipro":
             GeminiPro(
                 temperature=config.llmTemperature,

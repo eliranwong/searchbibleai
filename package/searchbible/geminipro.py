@@ -6,7 +6,7 @@ from vertexai.generative_models._generative_models import (
     HarmBlockThreshold,
 )
 from searchbible import config
-from searchbible.utils.bible_studies import bible_study_suggestions
+#from searchbible.utils.bible_studies import bible_study_suggestions
 from searchbible.utils.streaming_word_wrapper import StreamingWordWrapper
 from searchbible.health_check import HealthCheck
 if not hasattr(config, "exit_entry"):
@@ -59,7 +59,7 @@ class GeminiPro:
 
     def run(self, prompt=""):
         completer = WordCompleter(
-            bible_study_suggestions + config.read_suggestions,
+            config.read_suggestions,
             ignore_case=True,
             sentence=True,
         )
@@ -107,8 +107,6 @@ class GeminiPro:
                     custom_key_bindings=custom_key_bindings,
                     bottom_toolbar=" [ctrl+q] exit [ctrl+n] new chat ",
                 )
-                if prompt and not prompt in (".new", config.exit_entry) and hasattr(config, "currentMessages"):
-                    config.currentMessages.append({"content": prompt, "role": "user"})
             else:
                 prompt = HealthCheck.simplePrompt(
                     style=promptStyle,
@@ -117,6 +115,7 @@ class GeminiPro:
                     custom_key_bindings=custom_key_bindings,
                     bottom_toolbar=" [ctrl+q] exit [ctrl+n] new chat ",
                     default=prompt,
+                    accept_default=True,
                 )
             if prompt == config.exit_entry:
                 break
@@ -125,6 +124,11 @@ class GeminiPro:
                 chat = model.start_chat()
                 print("New chat started!")
             elif prompt := prompt.strip():
+                prompt = config.removeSpecialEntries(prompt)
+                if prompt and not prompt in (".new", config.exit_entry) and hasattr(config, "currentMessages"):
+                    userMessage = {"role": "user", "content": prompt}
+                    config.currentMessages.append(userMessage)
+
                 streamingWordWrapper = StreamingWordWrapper()
                 config.pagerContent = ""
                 #self.addPagerContent = True

@@ -1,5 +1,5 @@
 from searchbible import config
-from searchbible.utils.bible_studies import bible_study_suggestions
+#from searchbible.utils.bible_studies import bible_study_suggestions
 from searchbible.utils.streaming_word_wrapper import StreamingWordWrapper
 from searchbible.health_check import HealthCheck
 if not hasattr(config, "openaiApiKey") or not config.openaiApiKey:
@@ -48,7 +48,7 @@ class ChatGPT:
 
     def run(self, prompt=""):
         completer = WordCompleter(
-            bible_study_suggestions + config.read_suggestions,
+            config.read_suggestions,
             ignore_case=True,
             sentence=True,
         )
@@ -87,10 +87,6 @@ class ChatGPT:
                     custom_key_bindings=custom_key_bindings,
                     bottom_toolbar=" [ctrl+q] exit [ctrl+n] new chat ",
                 )
-                userMessage = {"role": "user", "content": prompt}
-                self.messages.append(userMessage)
-                if prompt and not prompt in (".new", config.exit_entry) and hasattr(config, "currentMessages"):
-                    config.currentMessages.append(userMessage)
             else:
                 prompt = HealthCheck.simplePrompt(
                     style=promptStyle,
@@ -99,6 +95,7 @@ class ChatGPT:
                     custom_key_bindings=custom_key_bindings,
                     bottom_toolbar=" [ctrl+q] exit [ctrl+n] new chat ",
                     default=prompt,
+                    accept_default=True,
                 )
             if prompt == config.exit_entry:
                 break
@@ -107,6 +104,12 @@ class ChatGPT:
                 self.messages = self.resetMessages()
                 print("New chat started!")
             elif prompt := prompt.strip():
+                prompt = config.removeSpecialEntries(prompt)
+                userMessage = {"role": "user", "content": prompt}
+                self.messages.append(userMessage)
+                if prompt and not prompt in (".new", config.exit_entry) and hasattr(config, "currentMessages"):
+                    config.currentMessages.append(userMessage)
+
                 streamingWordWrapper = StreamingWordWrapper()
                 config.pagerContent = ""
 
