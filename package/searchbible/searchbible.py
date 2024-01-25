@@ -62,13 +62,25 @@ appName = "Search Bible AI"
 abbrev = BibleBooks.abbrev["eng"]
 kjvRefs, _ = BibleBooks().getAllKJVreferences()
 
+actions = [
+    ".verses",
+    ".paragraphs",
+    ".bibles",
+    ".chatgpt",
+    ".geminipro",
+    ".setdefaultchatbot",
+    "[chat]",
+    "[chatgpt]",
+    "[geminipro]",
+]
+
 historyFolder = os.path.join(config.storagedirectory, "history")
 Path(historyFolder).mkdir(parents=True, exist_ok=True)
 read_history = os.path.join(historyFolder, "read")
 read_session = PromptSession(history=FileHistory(read_history))
 bible_study_suggestions = [f"{i}[chat]\n" for i in bible_study_suggestions]
 config.read_suggestions = Bible.getBibleList() + [i[0] for i in abbrev.values()] + kjvRefs + bible_study_suggestions
-read_completer = FuzzyCompleter(WordCompleter(config.read_suggestions, ignore_case=True, sentence=True))
+read_completer = FuzzyCompleter(WordCompleter(config.read_suggestions + actions, ignore_case=True, sentence=True))
 search_book_history = os.path.join(historyFolder, "search_book")
 search_book_session = PromptSession(history=FileHistory(search_book_history))
 book_suggestions = ["ALL"] + [i[0] for i in abbrev.values()]
@@ -132,6 +144,18 @@ def read(default: str="") -> None:
     HealthCheck.print(f"* enter '{config.exit_entry}' or press 'Ctrl+Q' to exit current feature of quit this app")
     HealthCheck.print2(config.divider)
 
+    def setDefaultChatbot():
+        dialogs = TerminalModeDialogs(None)
+        model = dialogs.getValidOptions(
+            options=("chatgpt", "geminipro"),
+            title="Default Chatbot",
+            default=config.chatbot,
+            text="Default chatbot is loaded when you include '[chat]' in your input.",
+        )
+        if model:
+            config.chatbot = model
+            print(f"Default chatbot: {model}")
+
     def selectBibleForComparison():
         dialogs = TerminalModeDialogs(None)
         options = Bible.getBibleList()
@@ -163,12 +187,12 @@ def read(default: str="") -> None:
     @this_key_bindings.add("c-g")
     def _(event):
         buffer = event.app.current_buffer
-        buffer.text = ".chatgpt"
+        buffer.text = ".chatgpt" if config.chatbot == "chatgpt" else ".geminipro"
         buffer.validate_and_handle()
     @this_key_bindings.add("escape", "g")
     def _(event):
         buffer = event.app.current_buffer
-        buffer.text = ".geminipro"
+        buffer.text = ".geminipro" if config.chatbot == "chatgpt" else ".chatgpt"
         buffer.validate_and_handle()
     @this_key_bindings.add("c-p")
     def _(event):
@@ -204,7 +228,7 @@ def read(default: str="") -> None:
         default = ""
 
         # default chatbot
-        userInput = userInput.replace("[chat]", "[chatgpt]")
+        userInput = userInput.replace("[chat]", f"[{config.chatbot}]")
 
         if userInput == config.exit_entry:
             break
@@ -216,6 +240,8 @@ def read(default: str="") -> None:
             search(bible=config.mainText, paragraphs=True)
         elif userInput == ".bibles":
             selectBibleForComparison()
+        elif userInput == ".setdefaultchatbot":
+            setDefaultChatbot()
         elif "[chatgpt]" in userInput:
             ChatGPT(
                 temperature=config.llmTemperature,

@@ -82,6 +82,8 @@ defaultSettings = (
     ('maxClosestMatches', 20),
     ('compareBibles', False),
     ('compareBibleVersions', ["KJV", "NET"]),
+
+    ("chatbot", "chatgpt"),
 )
 
 # save default configs
