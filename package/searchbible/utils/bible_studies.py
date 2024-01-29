@@ -132,6 +132,10 @@ However, remember, I want you not to quote the whole verse word by word, especia
 Bible verse:
 """)
 
+bible_study_suggestions.append("""Bible Insights.
+Give me exegetical insights in detail on the following bible verses:
+""")
+
 # Studies
 bible_study_suggestions.append("""Bible Perspective.
 Tell me how we should understand the content given below, according to biblical perspectives and principles:

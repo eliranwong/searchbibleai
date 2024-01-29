@@ -35,7 +35,7 @@ HealthCheck.check()
 
 # Start of main application
 from prompt_toolkit import print_formatted_text, HTML
-import chromadb, re, argparse, shutil
+import chromadb, re, argparse, shutil, threading, asyncio, subprocess
 from searchbible.chatgpt import ChatGPT
 from searchbible.geminipro import GeminiPro
 from searchbible.utils.BibleBooks import BibleBooks
@@ -55,14 +55,24 @@ from prompt_toolkit.history import FileHistory
 from prompt_toolkit.completion import WordCompleter, FuzzyCompleter
 from prompt_toolkit.shortcuts import set_title, clear_title
 from prompt_toolkit.key_binding import KeyBindings
+from prompt_toolkit.input import create_input
+from prompt_toolkit.keys import Keys
 from pathlib import Path
 
+# Work with VLC player for bible audio playback
+import vlc
+# Create a VLC instance
+vlc_instance = vlc.Instance()
+# Create a media player
+media_player = vlc_instance.media_player_new()
 
 appName = "Search Bible AI"
 abbrev = BibleBooks.abbrev["eng"]
 kjvRefs, _ = BibleBooks().getAllKJVreferences()
+config.currentVerses = []
 
-actions = [
+actions = sorted([
+    ".audio",
     ".verses",
     ".paragraphs",
     ".bibles",
@@ -72,7 +82,7 @@ actions = [
     "[chat]",
     "[chatgpt]",
     "[geminipro]",
-]
+])
 
 historyFolder = os.path.join(config.storagedirectory, "history")
 Path(historyFolder).mkdir(parents=True, exist_ok=True)
@@ -127,7 +137,9 @@ def compareBibles(ref: str, paragraphs: bool=False) -> None:
                     itemContent = re.sub("\\A.*?\n", "", itemContent.strip())
                     print(f"({i})\n{itemContent}\n")
                 else:
-                    HealthCheck.print4(f"({i}) {itemContent.strip()}")
+                    itemContent = itemContent.strip()
+                    config.currentVerses.append((i, ref, itemContent))
+                    HealthCheck.print4(f"({i}) {itemContent}")
 
 def read(default: str="") -> None:
     HealthCheck.print2("Search Bible AI")
@@ -262,6 +274,8 @@ def read(default: str="") -> None:
                 temperature=config.llmTemperature,
                 max_output_tokens = config.chatGPTApiMaxTokens,
             ).run()
+        elif userInput == ".audio":
+            playBibleAudio()
         elif userInput:
             HealthCheck.print2(config.divider)
 
@@ -285,6 +299,8 @@ def read(default: str="") -> None:
                 userInput = f"{bookName} {config.mainC}:{userInput[1:]}"
 
             if refs := parser.extractAllReferences(userInput):
+                # reset config.currentVerses
+                config.currentVerses = []
                 # verse reference(s) provided
                 isChapter = (len(refs) == 1 and len(refs[0]) == 3)
                 if isChapter:
@@ -300,21 +316,86 @@ def read(default: str="") -> None:
                             print("")
                         if config.chapterParagraphsAndSubheadings and f"{book}.{chapter}.{verse}" in agbSubheadings:
                             HealthCheck.print2(f"## {agbSubheadings[f'{book}.{chapter}.{verse}']}")
-                        HealthCheck.print4(f"({verse}) {scripture.strip()}")
+                        scripture = scripture.strip()
+                        config.currentVerses.append((config.mainText, ref, scripture))
+                        HealthCheck.print4(f"({verse}) {scripture}")
                         compareBibles(ref)
                     # draw a whole chapter
                     HealthCheck.print2(config.divider)
                 else:
                     verses = Bible.getVerses(refs, config.mainText)
                 # display all verses
+                book_chapter = ""
                 for ref, book, chapter, verse, scripture in verses:
                     book_abbr = abbrev[str(book)][0]
-                    HealthCheck.print4(f"({book_abbr} {chapter}:{verse}) {scripture.strip()}")
+                    scripture = scripture.strip()
+                    config.currentVerses.append((config.mainText, ref, scripture))
+                    HealthCheck.print4(f"({book_abbr} {chapter}:{verse}) {scripture}")
                     compareBibles(ref)
+                    this_book_chapter = f"{book}.{chapter}"
+                    if not this_book_chapter == book_chapter:
+                        HealthCheck.print2(config.divider)
+                        book_chapter = this_book_chapter
             else:
                 search(bible=config.mainText, paragraphs=False, simpleSearch=userInput)
+                HealthCheck.print2(config.divider)
 
-            HealthCheck.print2(config.divider)
+# play bible audio
+def playAudioFile(audioFile, vlcSpeed=1.0):
+    media = vlc_instance.media_new(audioFile)
+    media_player.set_media(media)
+    media_player.play()
+    media_player.set_rate(vlcSpeed)
+    while config.playback and media_player.get_state() != vlc.State.Ended:
+        continue
+
+def startBibleAudioPlayback(playback_event):
+    for version, ref, scripture in config.currentVerses:
+        if config.playback and not playback_event.is_set():
+            b, c, v = ref.split(".")
+            audioFile = os.path.join(config.storagedirectory, "audio", version, "default", f"{b}_{c}", f"{version}_{b}_{c}_{v}.mp3")
+            b = abbrev[str(b)][0]
+            if os.path.isfile(audioFile):
+                HealthCheck.print2(f"{version} - {b} {c}:{v}")
+                HealthCheck.print(scripture)
+                playAudioFile(audioFile)
+        else:
+            break
+    if not playback_event.is_set():
+        playback_event.set()
+
+def closeMediaPlayer():
+    media_player.stop()
+    config.playback = False
+    HealthCheck.print2("\nMedia player stopped!")
+
+def keyToStopPlayback(playback_event):
+    # allow users to stop the playback by pressing either ctrl+Q or ctrl+z
+    async def readKeys() -> None:
+        # create an input
+        input = create_input()
+        # capture key input
+        def keys_ready():
+            for key_press in input.read_keys():
+                #print(key_press)
+                if key_press.key in (Keys.ControlQ, Keys.ControlZ):
+                    closeMediaPlayer()
+                    playback_event.set()
+        # loop when playback is in progress
+        with input.raw_mode():
+            with input.attach(keys_ready):
+                while config.playback and not playback_event.is_set():
+                    await asyncio.sleep(0.1)
+    # run readKeys
+    asyncio.run(readKeys())
+
+def playBibleAudio():
+    playback_event = threading.Event()
+    playback_thread = threading.Thread(target=startBibleAudioPlayback, args=(playback_event,))
+    config.playback = True
+    playback_thread.start()
+    keyToStopPlayback(playback_event)
+    playback_thread.join()
 
 # combined semantic searches, literal searches and regular expression searches
 def search(bible:str="NET", paragraphs:bool=False, simpleSearch="") -> None:
@@ -506,7 +587,9 @@ def search(bible:str="NET", paragraphs:bool=False, simpleSearch="") -> None:
         for ref, book, chapter, verse, scripture in verses:
             book_abbr = abbrev[str(book)][0]
             if not regex or (regex and re.search(regex, scripture, flags=re.IGNORECASE)):
-                HealthCheck.print4(f"({book_abbr} {chapter}:{verse}) {scripture.strip()}")
+                scripture = scripture.strip()
+                config.currentVerses.append((config.mainText, ref, scripture))
+                HealthCheck.print4(f"({book_abbr} {chapter}:{verse}) {scripture}")
                 compareBibles(ref)
     
     if not simpleSearch:
@@ -544,6 +627,11 @@ def main():
     # clear terminal title
     HealthCheck.print2("Closing ...")
     clear_title()
+
+    # Release the media player
+    media_player.release()
+    # Release the VLC instance
+    vlc_instance.release()
 
 
 if __name__ == '__main__':

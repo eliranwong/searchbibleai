@@ -29,7 +29,7 @@ defaultSettings = (
     ('embeddingModel', 'paraphrase-multilingual-mpnet-base-v2'),
     ('customTextEditor', ""), # e.g. 'micro -softwrap true -wordwrap true'; built-in text editor eTextEdit is used when it is not defined.
     ('pagerView', False),
-    ('usePygame', True),
+    #('usePygame', True),
     ('wrapWords', True),
     ('mouseSupport', False),
     ('autoUpgrade', True),

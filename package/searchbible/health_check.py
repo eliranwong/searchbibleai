@@ -1,4 +1,4 @@
-import os, traceback, json, pprint, wcwidth, textwrap, threading, time, subprocess, sys, re, pkg_resources, requests
+import os, traceback, json, pprint, wcwidth, textwrap, threading, time, subprocess, sys, re, pkg_resources, requests, shutil
 import openai, tiktoken
 from openai import OpenAI
 from pygments.styles import get_style_by_name
@@ -304,6 +304,7 @@ class HealthCheck:
         with open(os.path.join(config.packageFolder, "config.py"), "w", encoding="utf-8") as fileObj:
             for name in dir(config):
                 excludeConfigList = [
+                    "currentVerses",
                     "mainFile",
                     "packageFolder",
                     "thisPlatform",
@@ -340,12 +341,7 @@ class HealthCheck:
 
     @staticmethod
     def isPackageInstalled(package):
-        whichCommand = "where.exe" if config.thisPlatform == "Windows" else "which"
-        try:
-            isInstalled, *_ = subprocess.Popen("{0} {1}".format(whichCommand, package), shell=True, stdout=subprocess.PIPE).communicate()
-            return True if isInstalled else False
-        except:
-            return False
+        return True if shutil.which(package.split(" ", 1)[0]) else False
 
     @staticmethod
     def getFiles():
