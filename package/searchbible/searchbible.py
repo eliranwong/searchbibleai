@@ -369,6 +369,7 @@ def changeConfigs():
     # open current configs with built-in text editor
     eTextEditor = f"{sys.executable} {os.path.join(config.packageFolder, 'eTextEdit.py')}"
     os.system(f"{eTextEditor} {configFile}")
+    set_title("Search Bible AI")
     # re-load configs
     try:
         loadConfig(configFile)
