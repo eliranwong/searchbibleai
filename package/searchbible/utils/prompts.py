@@ -66,22 +66,6 @@ class Prompts:
             buffer = event.app.current_buffer
             buffer.text = config.exit_entry
             buffer.validate_and_handle()
-        #@this_key_bindings.add("c-y")
-        #def _(event):
-        #    buffer = event.app.current_buffer
-        #    config.predefinedContextTemp = config.predefinedContext
-        #    config.predefinedContext = "[none]"
-        #    buffer.text = ".new"
-        #    buffer.validate_and_handle()
-        #    run_in_terminal(lambda: config.print3("Predefined context temporarily changed to: [none]"))
-        #@this_key_bindings.add("c-s")
-        #def _(event):
-        #    buffer = event.app.current_buffer
-        #    buffer.text = ".save"
-        #    buffer.validate_and_handle()
-        #@this_key_bindings.add("c-g")
-        #def _(_):
-        #    config.launchPager()
         @this_key_bindings.add("escape", "d")
         def _(_):
             config.developer = not config.developer
@@ -90,12 +74,6 @@ class Prompts:
         @this_key_bindings.add("c-l")
         def _(_):
             config.toggleMultiline()
-        #@this_key_bindings.add("c-o")
-        #def _(event):
-        #    buffer = event.app.current_buffer
-        #    config.defaultEntry = buffer.text
-        #    event.app.current_buffer.text = ".context"
-        #    event.app.current_buffer.validate_and_handle()
         @this_key_bindings.add("c-k")
         def _(_):
             run_in_terminal(self.showKeyBindings)
@@ -131,12 +109,14 @@ class Prompts:
         bindings = {
             "ctrl+q": "quit / exit current feature",
             "ctrl+s": "toggle chapter subheadings",
+            "ctrl+y": "play bible audio",
             "ctrl+f": "search verses",
             "esc+f": "search paragraphs",
             "ctrl+p": "toggle bible comparison",
             "esc+p": "select bibles for comparison",
             "ctrl+g": "launch ChatGPT prompt",
             "esc+g": "launch GeminiPro prompt",
+            "esc+c": "change configs",
             "ctrl+z": "cancel typing",
             "ctrl+a": "select / unselect all",
             "ctrl+c": "copy [w/ mouse support]",

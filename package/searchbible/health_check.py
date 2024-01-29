@@ -304,6 +304,8 @@ class HealthCheck:
         with open(os.path.join(config.packageFolder, "config.py"), "w", encoding="utf-8") as fileObj:
             for name in dir(config):
                 excludeConfigList = [
+                    "open",
+                    "read_suggestions",
                     "currentVerses",
                     "mainFile",
                     "packageFolder",

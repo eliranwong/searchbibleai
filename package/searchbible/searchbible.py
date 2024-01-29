@@ -35,7 +35,7 @@ HealthCheck.check()
 
 # Start of main application
 from prompt_toolkit import print_formatted_text, HTML
-import chromadb, re, argparse, shutil, threading, asyncio, subprocess
+import chromadb, re, argparse, shutil, threading, asyncio, sys, traceback
 from searchbible.chatgpt import ChatGPT
 from searchbible.geminipro import GeminiPro
 from searchbible.utils.BibleBooks import BibleBooks
@@ -72,6 +72,7 @@ kjvRefs, _ = BibleBooks().getAllKJVreferences()
 config.currentVerses = []
 
 actions = sorted([
+    ".configs",
     ".audio",
     ".verses",
     ".paragraphs",
@@ -225,6 +226,16 @@ def read(default: str="") -> None:
         buffer = event.app.current_buffer
         buffer.text = ":"
         buffer.validate_and_handle()
+    @this_key_bindings.add("c-y")
+    def _(event):
+        buffer = event.app.current_buffer
+        buffer.text = ".audio"
+        buffer.validate_and_handle()
+    @this_key_bindings.add("escape", "c")
+    def _(event):
+        buffer = event.app.current_buffer
+        buffer.text = ".configs"
+        buffer.validate_and_handle()
 
     prompts = Prompts(custom_key_bindings=this_key_bindings)
 
@@ -244,6 +255,8 @@ def read(default: str="") -> None:
 
         if userInput == config.exit_entry:
             break
+        elif userInput == ".configs":
+            changeConfigs()
         elif userInput == ".verses":
             # ctrl+f to search verses
             search(bible=config.mainText, paragraphs=False)
@@ -340,12 +353,43 @@ def read(default: str="") -> None:
                 search(bible=config.mainText, paragraphs=False, simpleSearch=userInput)
                 HealthCheck.print2(config.divider)
 
+# change configs
+def changeConfigs():
+    def loadConfig(configPath):
+        with open(configPath, "r", encoding="utf-8") as fileObj:
+            configs = fileObj.read()
+        configs = "from searchbible import config\n" + re.sub("^([A-Za-z])", r"config.\1", configs, flags=re.M)
+        exec(configs, globals())
+    # file paths
+    configFile = os.path.join(config.packageFolder, 'config.py')
+    backupFile = os.path.join(config.storagedirectory, "config_backup.py")
+    # backup configs
+    HealthCheck.saveConfig()
+    shutil.copy(configFile, backupFile)
+    # open current configs with built-in text editor
+    eTextEditor = f"{sys.executable} {os.path.join(config.packageFolder, 'eTextEdit.py')}"
+    os.system(f"{eTextEditor} {configFile}")
+    # re-load configs
+    try:
+        loadConfig(configFile)
+        HealthCheck.print2("Changes loaded!")
+    except:
+        HealthCheck.print2("Failed to load your changes!")
+        print(traceback.format_exc())
+        try:
+            HealthCheck.print2("Restoring backup ...")
+            loadConfig(backupFile)
+            shutil.copy(backupFile, configFile)
+            HealthCheck.print2("Restored!")
+        except:
+            HealthCheck.print2("Failed to restore backup!")
+
 # play bible audio
-def playAudioFile(audioFile, vlcSpeed=1.0):
+def playAudioFile(audioFile):
     media = vlc_instance.media_new(audioFile)
     media_player.set_media(media)
     media_player.play()
-    media_player.set_rate(vlcSpeed)
+    media_player.set_rate(config.vlcSpeed)
     while config.playback and media_player.get_state() != vlc.State.Ended:
         continue
 
