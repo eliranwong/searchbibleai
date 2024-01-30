@@ -91,10 +91,8 @@ class GeminiPro:
             print(f"{self.name} is not running due to missing configurations!")
             return None
         model = GenerativeModel("gemini-pro")
-        chat = model.start_chat(
-            #context=f"You're {self.name}, a helpful AI assistant.",
-        )
-        #HealthCheck.print2(f"\n{self.name} + Vision loaded!" if self.enableVision else f"\n{self.name} loaded!")
+        chat = model.start_chat()
+        justStarted = True
         HealthCheck.print2(f"\n{self.name} loaded!")
         print("(To start a new chart, enter '.new')")
         print(f"(To quit, enter '{config.exit_entry}')\n")
@@ -122,6 +120,7 @@ class GeminiPro:
             elif prompt == ".new":
                 clear()
                 chat = model.start_chat()
+                justStarted = True
                 print("New chat started!")
             elif prompt := prompt.strip():
                 prompt = config.removeSpecialEntries(prompt)
@@ -157,6 +156,9 @@ class GeminiPro:
 #                )
 
                 try:
+                    if justStarted:
+                        prompt = f"{config.aiSystemMessage}\n{prompt}"
+                        justStarted = False
                     # https://cloud.google.com/vertex-ai/docs/generative-ai/model-reference/gemini
                     # Note: At the time of writing, function call feature with Gemini Pro is very weak, compared with the function call feature offerred by ChatGPT:
                     # 1. Gemini Pro do not accept multiple tools in a single message

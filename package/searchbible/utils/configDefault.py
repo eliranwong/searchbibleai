@@ -15,6 +15,7 @@ def setConfig(defaultSettings, thisTranslation={}, temporary=False):
                 config.thisTranslation[i] = thisTranslation[i]
 
 defaultSettings = (
+    ('aiSystemMessage', "You're an expert on the Bible.\nPlease respond to all my inquiries with spiritual insights and informed knowledge regarding biblical teachings.\nPlease always strive to maintain an engaging and continuous conversation.\n"),
     ('thisTranslation', {}),
     ('cancel_entry', '.cancel'),
     ('exit_entry', '.exit'),
