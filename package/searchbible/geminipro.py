@@ -59,7 +59,7 @@ class GeminiPro:
 
     def run(self, prompt=""):
         completer = WordCompleter(
-            config.read_suggestions,
+            config.read_suggestions + ["[bible]"],
             ignore_case=True,
             sentence=True,
         )
@@ -89,7 +89,7 @@ class GeminiPro:
 
         if not self.runnable:
             print(f"{self.name} is not running due to missing configurations!")
-            return None
+            return ""
         model = GenerativeModel("gemini-pro")
         chat = model.start_chat()
         justStarted = True
@@ -122,6 +122,9 @@ class GeminiPro:
                 chat = model.start_chat()
                 justStarted = True
                 print("New chat started!")
+            elif "[bible]" in prompt:
+                HealthCheck.print2(f"\n{self.name} closed!")
+                return prompt.replace("[bible]", "").strip()
             elif prompt := prompt.strip():
                 prompt = config.removeSpecialEntries(prompt)
                 if prompt and not prompt in (".new", config.exit_entry) and hasattr(config, "currentMessages"):
@@ -200,6 +203,7 @@ class GeminiPro:
             prompt = ""
 
         HealthCheck.print2(f"\n{self.name} closed!")
+        return ""
 
 def main():
     # Create the parser

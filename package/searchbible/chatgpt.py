@@ -48,7 +48,7 @@ class ChatGPT:
 
     def run(self, prompt=""):
         completer = WordCompleter(
-            config.read_suggestions,
+            config.read_suggestions + ["[bible]"],
             ignore_case=True,
             sentence=True,
         )
@@ -103,6 +103,9 @@ class ChatGPT:
                 clear()
                 self.messages = self.resetMessages()
                 print("New chat started!")
+            elif "[bible]" in prompt:
+                HealthCheck.print2(f"\n{self.name} closed!")
+                return prompt.replace("[bible]", "").strip()
             elif prompt := prompt.strip():
                 prompt = config.removeSpecialEntries(prompt)
                 userMessage = {"role": "user", "content": prompt}
@@ -144,6 +147,7 @@ class ChatGPT:
             prompt = ""
 
         HealthCheck.print2(f"\n{self.name} closed!")
+        return ""
 
 def main():
     # Create the parser

@@ -268,22 +268,22 @@ def read(default: str="") -> None:
         elif userInput == ".setdefaultchatbot":
             setDefaultChatbot()
         elif "[chatgpt]" in userInput:
-            ChatGPT(
+            default = ChatGPT(
                 temperature=config.llmTemperature,
                 max_output_tokens = config.chatGPTApiMaxTokens,
             ).run(userInput)
         elif userInput == ".chatgpt":
-            ChatGPT(
+            default = ChatGPT(
                 temperature=config.llmTemperature,
                 max_output_tokens = config.chatGPTApiMaxTokens,
             ).run()
         elif "[geminipro]" in userInput:
-            GeminiPro(
+            default = GeminiPro(
                 temperature=config.llmTemperature,
                 max_output_tokens = config.chatGPTApiMaxTokens,
             ).run(userInput)
         elif userInput == ".geminipro":
-            GeminiPro(
+            default = GeminiPro(
                 temperature=config.llmTemperature,
                 max_output_tokens = config.chatGPTApiMaxTokens,
             ).run()
@@ -340,15 +340,18 @@ def read(default: str="") -> None:
                 # display all verses
                 book_chapter = ""
                 for ref, book, chapter, verse, scripture in verses:
+                    this_book_chapter = f"{book}.{chapter}"
+                    if not book_chapter:
+                        book_chapter = this_book_chapter
+                    elif not this_book_chapter == book_chapter:
+                        HealthCheck.print2(config.divider)
+                        book_chapter = this_book_chapter
                     book_abbr = abbrev[str(book)][0]
                     scripture = scripture.strip()
                     config.currentVerses.append((config.mainText, ref, scripture))
                     HealthCheck.print4(f"({book_abbr} {chapter}:{verse}) {scripture}")
                     compareBibles(ref)
-                    this_book_chapter = f"{book}.{chapter}"
-                    if not this_book_chapter == book_chapter:
-                        HealthCheck.print2(config.divider)
-                        book_chapter = this_book_chapter
+                HealthCheck.print2(config.divider)
             else:
                 search(bible=config.mainText, paragraphs=False, simpleSearch=userInput)
                 HealthCheck.print2(config.divider)
