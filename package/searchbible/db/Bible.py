@@ -12,7 +12,7 @@ class Bible:
     @staticmethod
     def getBibleList() -> list:
         bibles = os.path.join(config.storagedirectory, "bibles")
-        return [i for i in os.listdir(bibles) if os.path.isdir(os.path.join(bibles, i)) and os.path.isfile(os.path.join(bibles, i, "chroma.sqlite3"))]
+        return [] if not os.path.isdir(bibles) else [i for i in os.listdir(bibles) if os.path.isdir(os.path.join(bibles, i)) and os.path.isfile(os.path.join(bibles, i, "chroma.sqlite3"))]
 
     @staticmethod
     def getUbaBibleList() -> list:

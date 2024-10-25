@@ -59,12 +59,15 @@ from prompt_toolkit.input import create_input
 from prompt_toolkit.keys import Keys
 from pathlib import Path
 
-# Work with VLC player for bible audio playback
-import vlc
-# Create a VLC instance
-vlc_instance = vlc.Instance()
-# Create a media player
-media_player = vlc_instance.media_player_new()
+'''
+if not config.isTermux:
+    # Work with VLC player for bible audio playback
+    import vlc
+    # Create a VLC instance
+    vlc_instance = vlc.Instance()
+    # Create a media player
+    media_player = vlc_instance.media_player_new()
+'''
 
 appName = "Search Bible AI"
 abbrev = BibleBooks.abbrev["eng"]
@@ -73,7 +76,7 @@ config.currentVerses = []
 
 actions = sorted([
     ".configs",
-    ".audio",
+    #".audio",
     ".verses",
     ".paragraphs",
     ".bibles",
@@ -84,6 +87,10 @@ actions = sorted([
     "[chatgpt]",
     "[geminipro]",
 ])
+'''
+if not config.isTermux:
+    actions.append(".audio")
+'''
 
 historyFolder = os.path.join(config.storagedirectory, "history")
 Path(historyFolder).mkdir(parents=True, exist_ok=True)
@@ -226,11 +233,12 @@ def read(default: str="") -> None:
         buffer = event.app.current_buffer
         buffer.text = ":"
         buffer.validate_and_handle()
-    @this_key_bindings.add("c-y")
-    def _(event):
-        buffer = event.app.current_buffer
-        buffer.text = ".audio"
-        buffer.validate_and_handle()
+    if not config.isTermux:
+        @this_key_bindings.add("c-y")
+        def _(event):
+            buffer = event.app.current_buffer
+            buffer.text = ".audio"
+            buffer.validate_and_handle()
     @this_key_bindings.add("escape", "c")
     def _(event):
         buffer = event.app.current_buffer
@@ -287,7 +295,7 @@ def read(default: str="") -> None:
                 temperature=config.llmTemperature,
                 max_output_tokens = config.chatGPTApiMaxTokens,
             ).run()
-        elif userInput == ".audio":
+        elif userInput == ".audio" and not config.isTermux:
             playBibleAudio()
         elif userInput:
             HealthCheck.print2(config.divider)
@@ -390,12 +398,15 @@ def changeConfigs():
 
 # play bible audio
 def playAudioFile(audioFile):
-    media = vlc_instance.media_new(audioFile)
-    media_player.set_media(media)
-    media_player.play()
-    media_player.set_rate(config.vlcSpeed)
-    while config.playback and media_player.get_state() != vlc.State.Ended:
-        continue
+    if not config.isTermux:
+        media = vlc_instance.media_new(audioFile)
+        media_player.set_media(media)
+        media_player.play()
+        media_player.set_rate(config.vlcSpeed)
+        while config.playback and media_player.get_state() != vlc.State.Ended:
+            continue
+    else:
+        print("This feature is not supported on your device.")
 
 def startBibleAudioPlayback(playback_event):
     for version, ref, scripture in config.currentVerses:
@@ -413,9 +424,10 @@ def startBibleAudioPlayback(playback_event):
         playback_event.set()
 
 def closeMediaPlayer():
-    media_player.stop()
-    config.playback = False
-    HealthCheck.print2("\nMedia player stopped!")
+    if not config.isTermux:
+        media_player.stop()
+        config.playback = False
+        HealthCheck.print2("\nMedia player stopped!")
 
 def keyToStopPlayback(playback_event):
     # allow users to stop the playback by pressing either ctrl+Q or ctrl+z
@@ -438,12 +450,15 @@ def keyToStopPlayback(playback_event):
     asyncio.run(readKeys())
 
 def playBibleAudio():
-    playback_event = threading.Event()
-    playback_thread = threading.Thread(target=startBibleAudioPlayback, args=(playback_event,))
-    config.playback = True
-    playback_thread.start()
-    keyToStopPlayback(playback_event)
-    playback_thread.join()
+    if not config.isTermux:
+        playback_event = threading.Event()
+        playback_thread = threading.Thread(target=startBibleAudioPlayback, args=(playback_event,))
+        config.playback = True
+        playback_thread.start()
+        keyToStopPlayback(playback_event)
+        playback_thread.join()
+    else:
+        print("This feature is not supported on your device.")
 
 # combined semantic searches, literal searches and regular expression searches
 def search(bible:str="NET", paragraphs:bool=False, simpleSearch="") -> None:
@@ -481,7 +496,7 @@ def search(bible:str="NET", paragraphs:bool=False, simpleSearch="") -> None:
             pass
         return cc
 
-    if simpleSearch:
+    if simpleSearch and not paragraphs:
         meaning = simpleSearch.replace("\n", " ")
         n_results = config.maxClosestMatches
         where = None
@@ -492,13 +507,16 @@ def search(bible:str="NET", paragraphs:bool=False, simpleSearch="") -> None:
         HealthCheck.print2(f"SEARCH {'PARAGRAPHS' if paragraphs else 'VERSES'}")
         HealthCheck.print2(config.divider)
         # search in books
-        HealthCheck.print2("In books (use '||' for combo, '-' for range):")
-        print("e.g. Gen||Matt-John||Rev")
-        books = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_book_session, completer=book_completer, default=getLastEntry(search_book_history))
-        if books.lower() == config.exit_entry:
-            return
-        if books.lower() == "all":
+        if simpleSearch and paragraphs:
             books = ""
+        else:
+            HealthCheck.print2("In books (use '||' for combo, '-' for range):")
+            print("e.g. Gen||Matt-John||Rev")
+            books = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_book_session, completer=book_completer, default=getLastEntry(search_book_history))
+            if books.lower() == config.exit_entry:
+                return
+            if books.lower() == "all":
+                books = ""
         books = BibleBooks.getBookCombo(books)
         if books:
             if paragraphs:
@@ -508,13 +526,16 @@ def search(bible:str="NET", paragraphs:bool=False, simpleSearch="") -> None:
         else:
             books = {}
         # search in chapters
-        HealthCheck.print2("In chapters (use '||' for combo, '-' for range):")
-        print("e.g. 2||4||6-8||10")
-        chapters = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_chapter_session, validator=NumberValidator(), default=getLastEntry(search_chapter_history))
-        if chapters.lower() == config.exit_entry:
-            return
-        if chapters.lower() == "all":
+        if simpleSearch and paragraphs:
             chapters = ""
+        else:
+            HealthCheck.print2("In chapters (use '||' for combo, '-' for range):")
+            print("e.g. 2||4||6-8||10")
+            chapters = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_chapter_session, validator=NumberValidator(), default=getLastEntry(search_chapter_history))
+            if chapters.lower() == config.exit_entry:
+                return
+            if chapters.lower() == "all":
+                chapters = ""
         if chapters := chapters.strip():
             splits = chapters.split("||")
             if len(splits) == 1:
@@ -547,37 +568,47 @@ def search(bible:str="NET", paragraphs:bool=False, simpleSearch="") -> None:
             chapters = {}
 
         # search for plain words
-        HealthCheck.print2("Search for plain words ('||' denotes 'or'; '&amp;&amp;' denotes 'and'):")
-        print("e.g. Lord&amp;&amp;God||Jesus&amp;&amp;love")
-        contains = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_literal_session, default=getLastEntry(search_literal_history))
-        if contains.lower() == config.exit_entry:
-            return
-        if contains.strip():
-            splits = contains.split("||")
-            contains = {"$or": [getAndItems(i) for i in splits]} if len(splits) > 1 else getAndItems(contains)
-        else:
+        if simpleSearch and paragraphs:
             contains = ""
-        # search for meaning
-        HealthCheck.print2("Search for meaning:")
-        meaning = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_semantic_session, default=getLastEntry(search_semantic_history))
-        if meaning.lower() == config.exit_entry:
-            return
-        if meaning:
-            HealthCheck.print2("Maximum number of closest matches:")
-            # specify number of closest matches
-            default_n_results = config.maxClosestMatches
-            n_results = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_closest_match_session, validator=NumberValidator(), default=str(default_n_results))
-            if n_results.lower() == config.exit_entry:
+        else:
+            HealthCheck.print2("Search for plain words ('||' denotes 'or'; '&amp;&amp;' denotes 'and'):")
+            print("e.g. Lord&amp;&amp;God||Jesus&amp;&amp;love")
+            contains = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_literal_session, default=getLastEntry(search_literal_history))
+            if contains.lower() == config.exit_entry:
                 return
-            if n_results and int(n_results) > 0:
-                config.maxClosestMatches = int(n_results)
+            if contains.strip():
+                splits = contains.split("||")
+                contains = {"$or": [getAndItems(i) for i in splits]} if len(splits) > 1 else getAndItems(contains)
             else:
-                config.maxClosestMatches = default_n_results
+                contains = ""
+        # search for meaning
+        if simpleSearch and paragraphs:
+            meaning = simpleSearch
+        else:
+            HealthCheck.print2("Search for meaning:")
+            meaning = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_semantic_session, default=getLastEntry(search_semantic_history))
+            if meaning.lower() == config.exit_entry:
+                return
+        if meaning:
+            if not (simpleSearch and paragraphs):
+                HealthCheck.print2("Maximum number of closest matches:")
+                # specify number of closest matches
+                default_n_results = config.maxClosestMatches
+                n_results = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_closest_match_session, validator=NumberValidator(), default=str(default_n_results))
+                if n_results.lower() == config.exit_entry:
+                    return
+                if n_results and int(n_results) > 0:
+                    config.maxClosestMatches = int(n_results)
+                else:
+                    config.maxClosestMatches = default_n_results
         # search for regex
-        HealthCheck.print2("Search for regular expression:")
-        regex = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_regex_session, default=getLastEntry(search_regex_history))
-        if regex.lower() == config.exit_entry:
-            return
+        if simpleSearch and paragraphs:
+            regex = ""
+        else:
+            HealthCheck.print2("Search for regular expression:")
+            regex = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_regex_session, default=getLastEntry(search_regex_history))
+            if regex.lower() == config.exit_entry:
+                return
 
         # formulate where filter
         if books and chapters:
@@ -617,7 +648,9 @@ def search(bible:str="NET", paragraphs:bool=False, simpleSearch="") -> None:
         verses = [(metadata["start"], metadata["book_start"], metadata["chapter_start"], metadata["verse_start"], metadata["chapter_end"], metadata["verse_end"], document) for metadata, document in zip(metadatas, documents)]
     else:
         verses = [(metadata["reference"], metadata["book"], metadata["chapter"], metadata["verse"], document) for metadata, document in zip(metadatas, documents)]
-    
+
+    plainTextOutput = []
+
     if not meaning:
         # sorting for non-semantic search
         verses = sorted(verses, key=lambda x: version.parse(x[0]))
@@ -626,7 +659,9 @@ def search(bible:str="NET", paragraphs:bool=False, simpleSearch="") -> None:
         for ref, book, chapter, verse, chapter_end, verse_end, scripture in verses:
             book_abbr = abbrev[str(book)][0]
             if not regex or (regex and re.search(regex, scripture, flags=re.I|re.M)):
-                HealthCheck.print2(f"# {book_abbr} {chapter}:{verse}-{chapter_end}:{verse_end}")
+                title = f"# {book_abbr} {chapter}:{verse}-{chapter_end}:{verse_end}"
+                plainTextOutput += [title, scripture]
+                HealthCheck.print2(title)
                 scripture = re.sub(r"\A(.+?)$", r"<{0}>## \1</{0}>".format(config.terminalPromptIndicatorColor2), scripture, flags=re.M)
                 scripture = re.sub("^([0-9]+?:[0-9]+?) ", r"<{0}>(\1)</{0}>".format(config.terminalPromptIndicatorColor2), scripture, flags=re.M)
                 print_formatted_text(HTML(f"{scripture.strip()}\n"))
@@ -637,11 +672,14 @@ def search(bible:str="NET", paragraphs:bool=False, simpleSearch="") -> None:
             if not regex or (regex and re.search(regex, scripture, flags=re.IGNORECASE)):
                 scripture = scripture.strip()
                 config.currentVerses.append((config.mainText, ref, scripture))
-                HealthCheck.print4(f"({book_abbr} {chapter}:{verse}) {scripture}")
+                content = f"({book_abbr} {chapter}:{verse}) {scripture}"
+                HealthCheck.print4(content)
+                plainTextOutput.append(content)
                 compareBibles(ref)
     
     if not simpleSearch:
         HealthCheck.print2(config.divider)
+    return "\n".join(plainTextOutput)
 
 def main():
     # Create the parser
@@ -676,10 +714,11 @@ def main():
     HealthCheck.print2("Closing ...")
     clear_title()
 
-    # Release the media player
-    media_player.release()
-    # Release the VLC instance
-    vlc_instance.release()
+    if not config.isTermux:
+        # Release the media player
+        media_player.release()
+        # Release the VLC instance
+        vlc_instance.release()
 
 
 if __name__ == '__main__':
