@@ -2,12 +2,11 @@ from searchbible import config
 #from searchbible.utils.bible_studies import bible_study_suggestions
 from searchbible.utils.streaming_word_wrapper import StreamingWordWrapper
 from searchbible.health_check import HealthCheck
-if not hasattr(config, "openaiApiKey") or not config.openaiApiKey:
+if not hasattr(config, "exit_entry") or not config.openaiApiKey:
     HealthCheck.setBasicConfig()
-    HealthCheck.changeAPIkey()
     HealthCheck.saveConfig()
-    print("Updated!")
-HealthCheck.checkCompletion()
+    #print("Updated!")
+#HealthCheck.checkCompletion()
 #HealthCheck.setPrint()
 
 from openai import OpenAI
@@ -28,6 +27,10 @@ class ChatGPT:
     """
 
     def __init__(self, name="ChatGPT", temperature=config.llmTemperature, max_output_tokens=config.chatGPTApiMaxTokens):
+        if not hasattr(config, "openaiApiKey") or not config.openaiApiKey:
+            HealthCheck.changeAPIkey()
+            HealthCheck.saveConfig()
+            #print("Updated!")
         self.name, self.temperature, self.max_output_tokens = name, temperature, max_output_tokens
         self.client = OpenAI()
         self.messages = self.resetMessages()

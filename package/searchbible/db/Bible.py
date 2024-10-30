@@ -10,19 +10,25 @@ from packaging import version
 class Bible:
 
     @staticmethod
+    def getBibleDir() -> str:
+        ubaUserDir = os.path.join(os.path.expanduser("~"), "UniqueBible", "marvelData", "bibles")
+        return ubaUserDir if os.path.isdir(ubaUserDir) else os.path.join(config.packageFolder, "data", "bibles")
+
+    @staticmethod
     def getBibleList() -> list:
         bibles = os.path.join(config.storagedirectory, "bibles")
         return [] if not os.path.isdir(bibles) else [i for i in os.listdir(bibles) if os.path.isdir(os.path.join(bibles, i)) and os.path.isfile(os.path.join(bibles, i, "chroma.sqlite3"))]
 
     @staticmethod
     def getUbaBibleList() -> list:
-        return [i[:-6] for i in os.listdir(os.path.join(config.packageFolder, "data", "bibles")) if os.path.isfile(os.path.join(config.packageFolder, "data", "bibles", i)) and i.endswith(".bible")]
+        bibleDir = Bible.getBibleDir()
+        return [i[:-6] for i in os.listdir(bibleDir) if os.path.isfile(os.path.join(bibleDir, i)) and i.endswith(".bible")]
 
     @staticmethod
     def getDbPath(bible: str) -> str:
         def convertBible(bible: str):
             HealthCheck.print3(f"Converting bible: {bible} ...")
-            ConvertBible.convert_bible(os.path.join(config.packageFolder, "data", "bibles", f"{bible}.bible"))
+            ConvertBible.convert_bible(os.path.join(Bible.getBibleDir(), f"{bible}.bible"))
         installedBibles = Bible.getBibleList()
         dbpath = os.path.join(config.storagedirectory, "bibles", bible)
         if bible in installedBibles:

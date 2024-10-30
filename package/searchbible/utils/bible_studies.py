@@ -13,7 +13,7 @@ In addition, explain the significance of the topic in the bible.
 I want your writing to be comprehensive and informative.
 Remember, in your writing, please provide me with concrete examples from the Bible and the bible references from the text you are citing.
 
-Bible topic:
+# Bible topic
 """)
 
 bible_study_suggestions.append("""Bible Place.
@@ -22,7 +22,7 @@ Give me comprehensive information on this location in the bible.
 If this singular name is used to denote various different locations in the Bible, kindly provide separate descriptions for each one.
 Explain the significance of this location in the bible.
 
-Bible location:
+# Bible location
 """)
 
 bible_study_suggestions.append("""Bible Person.
@@ -31,7 +31,7 @@ Give me comprehensive information on this person in the bible.
 If this singular name is used to denote various different characters in the Bible, kindly provide separate descriptions for each one.
 Explain the significance of this person in the bible.
 
-Bible preson name:
+# Bible preson name
 """)
 
 # Translation
@@ -47,6 +47,8 @@ Use "Transliteration:", "Translation:" and "Mapping:" as the section titles.
 Remember, do not give parsing information, explanation or repeat the bible reference that I give you.
 
 I am giving you the Hebrew verse text below:
+
+# Hebrew verse
 """)
 
 bible_study_suggestions.append("""Bible Greek Verse Translation.
@@ -61,6 +63,8 @@ Use "Transliteration:", "Translation:" and "Mapping:" as the section titles.
 Remember, do not give parsing information, explanation or repeat the bible reference that I give you.
 
 I am giving you the Greek verse text below:
+
+# Greek verse
 """)
 
 # Book Features
@@ -80,7 +84,7 @@ I want the introduction to be comprehensive and informative.
 When you explain, quote specific words or phases from relevant bible verses, if any.
 Answer all these relevant questions mentioned above, in the introduction, pertaining to the following bible book.
 
-Bible book name:
+# Bible book name
 """)
 
 bible_study_suggestions.append("""Bible Outline.
@@ -92,7 +96,7 @@ Additionally, kindly provide a title for each passage.
 Remember, use your own analysis based on the bible text instead of copying a published outline.
 If chapters are not specified, provide an outline to cover all chapters of the bible book given.
 
-Bible reference:
+# Bible reference
 """)
 
 # Chapter Features
@@ -112,7 +116,7 @@ I want your interpretation to be comprehensive and informative.
 When you explain, quote specific words or phases from relevant bible verses, if any.
 Answer all these relevant questions mentioned above, in the interpretation, pertaining to the following bible chapter.
 
-Bible chapter:
+# Bible chapter
 """)
 
 # Verse Features
@@ -121,7 +125,7 @@ Interpret the following verse in the light of its context, together with insight
 I want your interpretation to be comprehensive and informative.  When you explain, quote specific words or phases from the verse.
 However, remember, I want you not to quote the whole verse word by word, especially in the beginning of your response, as I already know its content.
 
-Bible verse:
+# Bible verse
 """)
 
 bible_study_suggestions.append("""Bible NT Verse Interpretation.
@@ -129,30 +133,32 @@ Interpret the following verse in the light of its context, together with insight
 I want your interpretation to be comprehensive and informative.  When you explain, quote specific words or phases from the verse.
 However, remember, I want you not to quote the whole verse word by word, especially in the beginning of your response, as I already know its content.
 
-Bible verse:
+# Bible verse
 """)
 
 bible_study_suggestions.append("""Bible Insights.
 Give me exegetical insights in detail on the following bible verses:
+
+# Verses
 """)
 
 # Studies
 bible_study_suggestions.append("""Bible Perspective.
 Tell me how we should understand the content given below, according to biblical perspectives and principles:
 
-Content:
+# Content
 """)
 
 bible_study_suggestions.append("""Bible Meaning.
 Explain the meaning of the content given below in reference to the Bible:
 
-Content:
+# Content
 """)
 
 bible_study_suggestions.append("""Bible Summary.
 Write a summary on the content given below in reference to the Bible:
 
-Content:
+# Content
 """)
 
 bible_study_suggestions.append("""Bible Highlights in an Old Testament passage in the bible.
@@ -165,6 +171,8 @@ You don't need to provide all the verses from the passage, as I am already famil
 I want your response focus on my questions.  However, do not repeat my questions word by word in your answer.
 
 Please write in detail pertaining to the following passage:
+
+# Passage
 """)
 
 bible_study_suggestions.append("""Bible Highlights in a New Testament passage in the bible.
@@ -177,6 +185,8 @@ You don't need to provide all the verses from the passage, as I am already famil
 I want your response focus on my questions.  However, do not repeat my questions word by word in your answer.
 
 Please write in detail pertaining to the following passage:
+
+# Passage
 """)
 
 bible_study_suggestions.append("""Bible Historical Context of an Old Testament passage in the bible.
@@ -189,6 +199,8 @@ I already know the content of the passage.  Please do not repeat.
 Do not give me summary of the passage that is not relevant to the struggling or historical context.
 
 Please write in detail pertaining to the following passage:
+
+# Passage
 """)
 
 bible_study_suggestions.append("""Bible Historical Context of a New Testament passage in the bible.
@@ -201,6 +213,8 @@ I already know the content of the passage.  Please do not repeat.
 Do not give me summary of the passage that is not relevant to the struggling or historical context.
 
 Please write in detail pertaining to the following passage:
+
+# Passage
 """)
 
 bible_study_suggestions.append("""Bible Themes in an Old Testament passage.
@@ -214,6 +228,8 @@ Do not give me historical context of the passage, as I already know them.
 Do not give me general information about the passage, as I am seeking specific themes, theological implications and connection with God.
 
 Please answer all relevant questions pertaining to the following passage:
+
+# Passage
 """)
 
 bible_study_suggestions.append("""Bible Themes in a New Testament passage.
@@ -227,6 +243,8 @@ Do not give me historical context of the passage, as I already know them.
 Do not give me general information about the passage, as I am seeking specific themes, theological implications and connection with God.
 
 Please answer all relevant questions pertaining to the following passage:
+
+# Passage
 """)
 
 bible_study_suggestions.append("""Bible Application.
@@ -239,6 +257,8 @@ What can I do to apply the lessons from this passage in my daily life?
 Are there any practical steps or behaviors that I can develop or change based on this passage?
 
 Please answer all relevant questions pertaining to the following passage:
+
+# Passage
 """)
 
 bible_study_suggestions.append("""Bible Sermon.
@@ -252,6 +272,8 @@ Write a sermon with the following questions in mind:
 7. Are there any important theological or doctrinal principles that need to be emphasized or clarified in relation to the passage?
 
 Please write pertaining to the following passage:
+
+# Passage
 """)
 
 bible_study_suggestions.append("""Bible Devotion.
@@ -267,17 +289,21 @@ I am already familiar with the contents of the passage, please refrain from prov
 I want deep insights about devotions.
 
 Please write pertaining to the following passage:
+
+# Passage
 """)
 
 bible_study_suggestions.append("""Bible Prayer.
 Write a prayer pertaining to the following content in reference to the Bible:
+
+# Content
 """)
 
 bible_study_suggestions.append("""Bible Short Prayer.
 Write a prayer pertaining to the following content in reference to the Bible.
 (Keep the prayer short and do not make it longer than a paragraph.)
 
-Content:
+# Content
 """)
 
 bible_study_suggestions.append("""Bible Review Questions.
@@ -287,6 +313,8 @@ I'm hoping to facilitate a meaningful discussion and deeper understanding of thi
 Remember, I am already familiar with the contents of the passage, please refrain from providing me with general information or summary. Please give me review questions for bible studies directly.
 
 Please answer all relevant questions pertaining to the following passage:
+
+# Passage
 """)
 
 bible_study_suggestions.append("""Bible Key Words.
@@ -295,7 +323,7 @@ Elaborate on their importance in comprehending the context and the bible as a wh
 I want your elaboration to be comprehensive and informative.
 Remember, in your writing, please provide me with concrete examples from the Bible and the bible references from the text you are citing.
 
-Content:
+# Content
 """)
 
 bible_study_suggestions.append("""Bible Key Themes.
@@ -304,7 +332,7 @@ Elaborate on their importance in comprehending the content given below and the b
 I want your elaboration to be comprehensive and informative.
 Remember, in your writing, please provide me with concrete examples from the Bible and the bible references from the text you are citing.
 
-Content:
+# Content
 """)
 
 bible_study_suggestions.append("""Bible Theology.
@@ -313,30 +341,36 @@ In addition, explain the significance of the theological messages in the bible.
 I want your writing to be comprehensive and informative.
 Remember, in your writing, please provide me with concrete examples from the Bible and the bible references from the text you are citing.
 
-Content:
+# Content
 """)
 
 bible_study_suggestions.append("""Bible Promises.
 Quote relevant Bible promises in relation to the content given below.
 Explain how these promises are meant to provide comfort, hope, and guidance in my life.
 
-Content:
+# Content
 """)
 
 bible_study_suggestions.append("""Bible Passages.
 Quote relevant Bible passages in relation to the content given below given below. Explain how these passages are related to the given content.
 
-Content:
+# Content
 """)
 
-bible_study_suggestions.append("""Bible Thought Progression of a bible book / chapter / passage.
+bible_study_suggestions.append("""Bible Thought Progression.
+Bible Thought Progression of a bible book / chapter / passage.
 Provide a detailed overview of the author's thought progression in effectively conveying the key messages of the following book / chapter / passage:
+
+# Book / Chapter / Passage
 """)
 
-bible_study_suggestions.append("""Bible Canonical Context of a bible book / chapter / passage.
+bible_study_suggestions.append("""Bible Canonical Context.
+Bible Canonical Context of a bible book / chapter / passage.
 How is this book / chapter / passage connected or linked with other books in the Bible?
 What is the canonical context of this given book / chapter / passage in light of the whole canon of the bible?
 How does this book / chapter / passage fit into the larger Biblical story in light of the whole canon of the bible?
                                
 Please answer all relevant questions pertaining to the following book / chapter / passage with concrete examples:
+
+# Book / Chapter / Passage
 """)

@@ -2,6 +2,21 @@ from searchbible import config
 from prompt_toolkit.validation import Validator, ValidationError
 from prompt_toolkit.application import run_in_terminal
 #from prompt_toolkit.application import get_app
+import re
+
+
+class RegexValidator(Validator):
+    def __init__(self, pattern=""):
+        super().__init__()
+        self.filter = pattern # e.g. "^[0-9|]*?$"
+
+    def validate(self, document):
+        text = document.text
+
+        if re.search(self.filter, text) or text.lower() in (config.exit_entry, config.cancel_entry):
+            pass
+        else:
+            raise ValidationError(message='This entry accepts numbers only!', cursor_position=len(text)-1)
 
 
 class NumberValidator(Validator):

@@ -1,32 +1,10 @@
 import os, platform
-
-mainFile = os.path.realpath(__file__)
-packageFolder = os.path.dirname(mainFile)
-
-# create config.py if it does not exist; in case user delete the file for some reasons
-configFile = os.path.join(packageFolder, "config.py")
-if not os.path.isfile(configFile):
-    open(configFile, "a", encoding="utf-8").close()
-
-try:
-    from searchbible import config
-except:
-    # write off problematic config file
-    open(configFile, "w", encoding="utf-8").close()
-    from searchbible import config
+from searchbible import config
 from searchbible.health_check import HealthCheck
 
-# share mainFile and packageFolder paths in config
-config.mainFile = mainFile
-config.packageFolder = packageFolder
-#package = os.path.basename(config.packageFolder)
-if os.getcwd() != config.packageFolder:
-    os.chdir(config.packageFolder)
+# share mainFile paths in config
+config.mainFile = os.path.realpath(__file__)
 
-# check current platform
-config.thisPlatform = platform.system()
-# check if it is running with Android Termux
-config.isTermux = True if os.path.isdir("/data/data/com.termux/files/home") else False
 # check storage directory
 HealthCheck.setSharedItems()
 # set up configs
@@ -42,7 +20,7 @@ from searchbible.utils.BibleBooks import BibleBooks
 from searchbible.utils.BibleVerseParser import BibleVerseParser
 from searchbible.utils.prompts import Prompts
 from searchbible.utils.prompt_dialogs import TerminalModeDialogs
-from searchbible.utils.prompt_validator import NumberValidator
+from searchbible.utils.prompt_validator import NumberValidator, RegexValidator
 from searchbible.db.Bible import Bible
 from searchbible.utils.AGBsubheadings import agbSubheadings
 from searchbible.utils.AGBparagraphs_expanded import agbParagraphs
@@ -81,11 +59,8 @@ actions = sorted([
     ".paragraphs",
     ".bibles",
     ".chatgpt",
-    ".geminipro",
-    ".setdefaultchatbot",
-    "[chat]",
-    "[chatgpt]",
-    "[geminipro]",
+    #".geminipro",
+    #".setdefaultchatbot",
 ])
 '''
 if not config.isTermux:
@@ -275,16 +250,12 @@ def read(default: str="") -> None:
             selectBibleForComparison()
         elif userInput == ".setdefaultchatbot":
             setDefaultChatbot()
-        elif "[chatgpt]" in userInput:
-            default = ChatGPT(
-                temperature=config.llmTemperature,
-                max_output_tokens = config.chatGPTApiMaxTokens,
-            ).run(userInput)
         elif userInput == ".chatgpt":
             default = ChatGPT(
                 temperature=config.llmTemperature,
                 max_output_tokens = config.chatGPTApiMaxTokens,
             ).run()
+            """
         elif "[geminipro]" in userInput:
             default = GeminiPro(
                 temperature=config.llmTemperature,
@@ -296,7 +267,7 @@ def read(default: str="") -> None:
                 max_output_tokens = config.chatGPTApiMaxTokens,
             ).run()
         elif userInput == ".audio" and not config.isTermux:
-            playBibleAudio()
+            playBibleAudio()"""
         elif userInput:
             HealthCheck.print2(config.divider)
 
@@ -531,7 +502,7 @@ def search(bible:str="NET", paragraphs:bool=False, simpleSearch="") -> None:
         else:
             HealthCheck.print2("In chapters (use '||' for combo, '-' for range):")
             print("e.g. 2||4||6-8||10")
-            chapters = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_chapter_session, validator=NumberValidator(), default=getLastEntry(search_chapter_history))
+            chapters = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_chapter_session, validator=RegexValidator(pattern="^[0-9|]*?$"), default=getLastEntry(search_chapter_history))
             if chapters.lower() == config.exit_entry:
                 return
             if chapters.lower() == "all":
@@ -572,7 +543,7 @@ def search(bible:str="NET", paragraphs:bool=False, simpleSearch="") -> None:
             contains = ""
         else:
             HealthCheck.print2("Search for plain words ('||' denotes 'or'; '&amp;&amp;' denotes 'and'):")
-            print("e.g. Lord&amp;&amp;God||Jesus&amp;&amp;love")
+            print("e.g. Lord&&God||Jesus&&love")
             contains = HealthCheck.simplePrompt(style=promptStyle, promptSession=search_literal_session, default=getLastEntry(search_literal_history))
             if contains.lower() == config.exit_entry:
                 return

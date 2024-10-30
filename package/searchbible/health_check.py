@@ -81,7 +81,7 @@ class HealthCheck:
         HealthCheck.checkPythonVersion()
         if config.autoUpgrade:
             HealthCheck.updateApp()
-        if not hasattr(config, "openaiApiKey"):
+        if not hasattr(config, "exit_entry"):
             HealthCheck.setBasicConfig()
         createShortcuts()
         HealthCheck.setOsOpenCmd()

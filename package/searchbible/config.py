@@ -1,0 +1,6 @@
+terminalPromptIndicatorColor1 = "ansimagenta"
+terminalPromptIndicatorColor2 = "ansicyan"
+terminalCommandEntryColor1 = "ansiyellow"
+terminalCommandEntryColor2 = "ansigreen"
+terminalResourceLinkColor = "ansiyellow"
+terminalHeadingTextColor = "ansigreen"

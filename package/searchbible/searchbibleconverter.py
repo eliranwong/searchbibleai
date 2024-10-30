@@ -5,7 +5,7 @@ import argparse, os
 
 def main():
     # set up basic configs
-    if not hasattr(config, "openaiApiKey"):
+    if not hasattr(config, "exit_entry"):
         HealthCheck.setBasicConfig()
 
     # Create the parser
