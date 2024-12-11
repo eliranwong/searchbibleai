@@ -3,10 +3,10 @@ argparse
 prompt_toolkit
 Pygments
 pyperclip
-openai==1.52.2
-google-cloud-aiplatform==1.70.0
+openai
+google-cloud-aiplatform
 apsw
-sentence-transformers==3.2.1
-chromadb>=0.5.3
+sentence-transformers
+chromadb
 python-vlc
-tiktoken==0.8.0
+tiktoken
